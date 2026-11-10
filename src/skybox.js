@@ -19,6 +19,9 @@ module.exports = function(renderCanvas) {
         self.pSkybox = util.loadProgram(self.gl, fs.readFileSync(__dirname + "/glsl/skybox.glsl", "utf8"));
         self.rSkybox = buildQuad(self.gl, self.pSkybox);
         self.textures = {};
+        // 镜头推进时相机可能远离原点，把贴图立方壳整体放大到始终包住相机路径。
+        // 只缩放顶点、不改 UV，贴图外观不变；默认 1 保持原有行为。
+        self.scale = 1.0;
     };
 
     self.setTextures = function(canvases) {
@@ -37,39 +40,42 @@ module.exports = function(renderCanvas) {
         self.gl.viewport(0, 0, renderCanvas.width, renderCanvas.height);
 
         var model = glm.mat4.create();
+        var scaled = glm.mat4.create();
+
+        function drawScaled(baseModel) {
+            glm.mat4.copy(scaled, baseModel);
+            glm.mat4.scale(scaled, scaled, [self.scale, self.scale, self.scale]);
+            self.pSkybox.setUniform("uModel", "Matrix4fv", false, scaled);
+            self.rSkybox.render();
+        }
 
         self.pSkybox.use();
         self.pSkybox.setUniform("uView", "Matrix4fv", false, view);
         self.pSkybox.setUniform("uProjection", "Matrix4fv", false, projection);
 
         self.textures.front.bind();
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        model = glm.mat4.create();
+        drawScaled(model);
 
         self.textures.back.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), Math.PI);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.left.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.right.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), -Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.top.bind();
         glm.mat4.rotateX(model, glm.mat4.create(), Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.bottom.bind();
         glm.mat4.rotateX(model, glm.mat4.create(), -Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
     };
 
 

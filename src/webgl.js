@@ -153,22 +153,25 @@ function Renderable(gl, program, buffers, primitiveCount) {
 
     self.render = function() {
         program.use();
-        for (name in buffers) {
+        for (var name in buffers) {
+            // 被着色器编译器优化掉的 attribute（未参与计算）不会出现在
+            // program.attribs 里，跳过即可，不能让整个绘制抛异常。
+            if (!program.attribs[name]) {
+                continue;
+            }
             var buffer = buffers[name].buffer;
             var size = buffers[name].size;
-            try {
-                var location = program.attribs[name].location;
-            } catch (e) {
-                console.log("Could not find location for", name);
-                throw e;
-            }
+            var location = program.attribs[name].location;
             buffer.bind();
             gl.enableVertexAttribArray(location);
             gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
         }
         gl.drawArrays(gl.TRIANGLES, 0, 3 * primitiveCount);
-        for (name in self.buffers) {
-            gl.disableVertexAttribArray(program.attributes[name].location);
+        for (var name2 in buffers) {
+            if (!program.attribs[name2]) {
+                continue;
+            }
+            gl.disableVertexAttribArray(program.attribs[name2].location);
         }
     }
 
@@ -188,7 +191,7 @@ function InstancedRenderable(gl, program, buffers, primitiveCount, instancedExt)
 
     self.render = function() {
         program.use();
-        for (name in buffers) {
+        for (var name in buffers) {
             var buffer = buffers[name].buffer;
             var size = buffers[name].size;
             try {
@@ -203,8 +206,8 @@ function InstancedRenderable(gl, program, buffers, primitiveCount, instancedExt)
             instancedExt.vertexAttribDivisorANGLE(location, buffers[name].divisor);
         }
         instancedExt.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6*2*3, primitiveCount)
-        for (name in self.buffers) {
-            gl.disableVertexAttribArray(program.attributes[name].location);
+        for (var name2 in buffers) {
+            gl.disableVertexAttribArray(program.attribs[name2].location);
         }
     }
 

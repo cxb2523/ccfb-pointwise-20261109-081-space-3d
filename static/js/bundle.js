@@ -4167,7 +4167,68 @@ module.exports = function(data, options) {
     });
 };
 
-},{"./external":18,"./nodejsUtils":26,"./stream/Crc32Probe":37,"./utf8":43,"./utils":44,"./zipEntries":45}],24:[function(require,module,exports){
+},{"./external":18,"./nodejsUtils":24,"./stream/Crc32Probe":37,"./utf8":43,"./utils":44,"./zipEntries":45}],24:[function(require,module,exports){
+(function (Buffer){
+'use strict';
+
+module.exports = {
+    /**
+     * True if this is running in Nodejs, will be undefined in a browser.
+     * In a browser, browserify won't include this file and the whole module
+     * will be resolved an empty object.
+     */
+    isNode : typeof Buffer !== "undefined",
+    /**
+     * Create a new nodejs Buffer from an existing content.
+     * @param {Object} data the data to pass to the constructor.
+     * @param {String} encoding the encoding to use.
+     * @return {Buffer} a new Buffer.
+     */
+    newBufferFrom: function(data, encoding) {
+        if (Buffer.from && Buffer.from !== Uint8Array.from) {
+            return Buffer.from(data, encoding);
+        } else {
+            if (typeof data === "number") {
+                // Safeguard for old Node.js versions. On newer versions,
+                // Buffer.from(number) / Buffer(number, encoding) already throw.
+                throw new Error("The \"data\" argument must not be a number");
+            }
+            return new Buffer(data, encoding);
+        }
+    },
+    /**
+     * Create a new nodejs Buffer with the specified size.
+     * @param {Integer} size the size of the buffer.
+     * @return {Buffer} a new Buffer.
+     */
+    allocBuffer: function (size) {
+        if (Buffer.alloc) {
+            return Buffer.alloc(size);
+        } else {
+            var buf = new Buffer(size);
+            buf.fill(0);
+            return buf;
+        }
+    },
+    /**
+     * Find out if an object is a Buffer.
+     * @param {Object} b the object to test.
+     * @return {Boolean} true if the object is a Buffer, false otherwise.
+     */
+    isBuffer : function(b){
+        return Buffer.isBuffer(b);
+    },
+
+    isStream : function (obj) {
+        return obj &&
+            typeof obj.on === "function" &&
+            typeof obj.pause === "function" &&
+            typeof obj.resume === "function";
+    }
+};
+
+}).call(this,require("buffer").Buffer)
+},{"buffer":4}],25:[function(require,module,exports){
 "use strict";
 
 var utils = require('../utils');
@@ -4243,7 +4304,7 @@ NodejsStreamInputAdapter.prototype.resume = function () {
 
 module.exports = NodejsStreamInputAdapter;
 
-},{"../stream/GenericWorker":40,"../utils":44}],25:[function(require,module,exports){
+},{"../stream/GenericWorker":40,"../utils":44}],26:[function(require,module,exports){
 'use strict';
 
 var Readable = require('readable-stream').Readable;
@@ -4287,68 +4348,7 @@ NodejsStreamOutputAdapter.prototype._read = function() {
 
 module.exports = NodejsStreamOutputAdapter;
 
-},{"../utils":44,"readable-stream":28}],26:[function(require,module,exports){
-(function (Buffer){
-'use strict';
-
-module.exports = {
-    /**
-     * True if this is running in Nodejs, will be undefined in a browser.
-     * In a browser, browserify won't include this file and the whole module
-     * will be resolved an empty object.
-     */
-    isNode : typeof Buffer !== "undefined",
-    /**
-     * Create a new nodejs Buffer from an existing content.
-     * @param {Object} data the data to pass to the constructor.
-     * @param {String} encoding the encoding to use.
-     * @return {Buffer} a new Buffer.
-     */
-    newBufferFrom: function(data, encoding) {
-        if (Buffer.from && Buffer.from !== Uint8Array.from) {
-            return Buffer.from(data, encoding);
-        } else {
-            if (typeof data === "number") {
-                // Safeguard for old Node.js versions. On newer versions,
-                // Buffer.from(number) / Buffer(number, encoding) already throw.
-                throw new Error("The \"data\" argument must not be a number");
-            }
-            return new Buffer(data, encoding);
-        }
-    },
-    /**
-     * Create a new nodejs Buffer with the specified size.
-     * @param {Integer} size the size of the buffer.
-     * @return {Buffer} a new Buffer.
-     */
-    allocBuffer: function (size) {
-        if (Buffer.alloc) {
-            return Buffer.alloc(size);
-        } else {
-            var buf = new Buffer(size);
-            buf.fill(0);
-            return buf;
-        }
-    },
-    /**
-     * Find out if an object is a Buffer.
-     * @param {Object} b the object to test.
-     * @return {Boolean} true if the object is a Buffer, false otherwise.
-     */
-    isBuffer : function(b){
-        return Buffer.isBuffer(b);
-    },
-
-    isStream : function (obj) {
-        return obj &&
-            typeof obj.on === "function" &&
-            typeof obj.pause === "function" &&
-            typeof obj.resume === "function";
-    }
-};
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":4}],27:[function(require,module,exports){
+},{"../utils":44,"readable-stream":28}],27:[function(require,module,exports){
 'use strict';
 var utf8 = require('./utf8');
 var utils = require('./utils');
@@ -4739,7 +4739,7 @@ var out = {
 };
 module.exports = out;
 
-},{"./compressedObject":14,"./defaults":17,"./generate":21,"./nodejs/NodejsStreamInputAdapter":24,"./nodejsUtils":26,"./stream/GenericWorker":40,"./stream/StreamHelper":41,"./utf8":43,"./utils":44,"./zipObject":47}],28:[function(require,module,exports){
+},{"./compressedObject":14,"./defaults":17,"./generate":21,"./nodejs/NodejsStreamInputAdapter":25,"./nodejsUtils":24,"./stream/GenericWorker":40,"./stream/StreamHelper":41,"./utf8":43,"./utils":44,"./zipObject":47}],28:[function(require,module,exports){
 /*
  * This file is used by module bundlers (browserify/webpack/etc) when
  * including a stream implementation. We use "readable-stream" to get a
@@ -5735,7 +5735,7 @@ StreamHelper.prototype = {
 module.exports = StreamHelper;
 
 }).call(this,require("buffer").Buffer)
-},{"../base64":13,"../external":18,"../nodejs/NodejsStreamOutputAdapter":25,"../support":42,"../utils":44,"./ConvertWorker":36,"./GenericWorker":40,"buffer":4}],42:[function(require,module,exports){
+},{"../base64":13,"../external":18,"../nodejs/NodejsStreamOutputAdapter":26,"../support":42,"../utils":44,"./ConvertWorker":36,"./GenericWorker":40,"buffer":4}],42:[function(require,module,exports){
 (function (Buffer){
 'use strict';
 
@@ -6054,7 +6054,7 @@ Utf8EncodeWorker.prototype.processChunk = function (chunk) {
 };
 exports.Utf8EncodeWorker = Utf8EncodeWorker;
 
-},{"./nodejsUtils":26,"./stream/GenericWorker":40,"./support":42,"./utils":44}],44:[function(require,module,exports){
+},{"./nodejsUtils":24,"./stream/GenericWorker":40,"./support":42,"./utils":44}],44:[function(require,module,exports){
 'use strict';
 
 var support = require('./support');
@@ -6532,7 +6532,7 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
     });
 };
 
-},{"./base64":13,"./external":18,"./nodejsUtils":26,"./support":42,"set-immediate-shim":86}],45:[function(require,module,exports){
+},{"./base64":13,"./external":18,"./nodejsUtils":24,"./support":42,"set-immediate-shim":86}],45:[function(require,module,exports){
 'use strict';
 var readerFor = require('./reader/readerFor');
 var utils = require('./utils');
@@ -17953,8 +17953,15 @@ var saveAs = require("filesaver.js").saveAs;
 var JSZip = require("jszip");
 var Space3D = require("./space-3d.js");
 var Skybox = require("./skybox.js");
+var Starfield = require("./starfield.js");
 
 var resolution = 1024;
+
+// 星空球壳半径（世界单位）。相机始终在球壳内部推进，三层视差都在这颗球里。
+var STAR_RADIUS = 4.0;
+
+// ?twinkle 档位：只作为频率乘数传给 shader，不重建顶点、不重算相位。
+var TWINKLE_PRESETS = [0.0, 0.5, 1.0, 2.0, 4.0];
 
 window.onload = function() {
   var params = qs.parse(location.hash);
@@ -17986,7 +17993,7 @@ window.onload = function() {
       }
       if (this.resolution <= 2048) {
         const cubemapData = this._saveCubemap().split(",")[1];
-        zip.file('cubemap.png', cubemapData, { base64: true });    
+        zip.file('cubemap.png', cubemapData, { base64: true });
       }
       zip.generateAsync({ type: "blob" }).then(blob => {
         saveAs(blob, "skybox.zip");
@@ -18000,7 +18007,7 @@ window.onload = function() {
       const bottom = document.getElementById('texture-bottom');
       const right = document.getElementById('texture-right');
       const back = document.getElementById('texture-back');
-      
+
       // set size of canvas depending on resolution
       var context = cubemapCanvas.getContext('2d');
       context.canvas.width = this.resolution * 4;
@@ -18013,8 +18020,8 @@ window.onload = function() {
       context.drawImage(bottom, this.resolution, this.resolution * 2);
       context.drawImage(right, this.resolution * 2, this.resolution);
       context.drawImage(back, this.resolution * 3, this.resolution);
-    
-      return cubemapCanvas.toDataURL("image/png");      
+
+      return cubemapCanvas.toDataURL("image/png");
     };
   };
 
@@ -18093,15 +18100,29 @@ window.onload = function() {
       sun: menu.sun,
       nebulae: menu.nebulae,
       resolution: menu.resolution,
-      animationSpeed: menu.animationSpeed
+      animationSpeed: menu.animationSpeed,
+      twinkle: twinkleMultiplier
     });
   }
 
   var hideControls = false;
 
+  // T 键在几档 ?twinkle 之间切换；只动频率乘数，相位缓冲保持不变。
+  var twinkleMultiplier =
+    params.twinkle === undefined ? 1.0 : parseFloat(params.twinkle);
+  if (!isFinite(twinkleMultiplier) || twinkleMultiplier < 0) {
+    twinkleMultiplier = 1.0;
+  }
+  var twinkleIndex = TWINKLE_PRESETS.indexOf(twinkleMultiplier);
+
   window.onkeypress = function(e) {
     if (e.charCode == 32) {
       hideControls = !hideControls;
+    }
+    if (e.charCode == 116 || e.charCode == 84) {
+      twinkleIndex = (twinkleIndex + 1) % TWINKLE_PRESETS.length;
+      twinkleMultiplier = TWINKLE_PRESETS[twinkleIndex];
+      starfield.setTwinkle(twinkleMultiplier);
     }
   };
 
@@ -18109,8 +18130,30 @@ window.onload = function() {
   renderCanvas.width = renderCanvas.clientWidth;
   renderCanvas.height = renderCanvas.clientHeight;
 
+  // 同一个 webgl 上下文：skybox 与星空共享，渲染顺序在每帧里显式控制。
+  var gl = renderCanvas.getContext("webgl");
+
   var skybox = new Skybox(renderCanvas);
   var space = new Space3D(resolution);
+
+  // 相机最远推进到约 3.4，把 skybox 立方壳放大到 8，保证整条路径都在壳内，
+  // 且壳面远于星空球壳(R=4)，不会在 far plane 渐隐区之前露出白边。
+  skybox.scale = 8.0;
+
+  // 单 draw call 三层视差星空。seed 只决定一次顶点生成，之后不再重建。
+  var starfield = new Starfield(gl, {
+    radius: STAR_RADIUS,
+    seed: hashcode(menu.seed + "|starfield"),
+    twinkle: twinkleMultiplier
+  });
+
+  // 调试 HUD：帧率、推进距离、twinkle 档位、WebGL 错误计数。
+  var hud = document.createElement("div");
+  hud.style.cssText =
+    "position:fixed;top:8px;left:8px;color:#9fe;font:12px monospace;" +
+    "background:rgba(0,0,0,0.45);padding:8px 10px;pointer-events:none;" +
+    "white-space:pre;line-height:1.5;";
+  document.body.appendChild(hud);
 
   function renderTextures() {
     var textures = space.render({
@@ -18141,13 +18184,30 @@ window.onload = function() {
   renderTextures();
 
   var tick = 0.0;
+  var elapsed = 0.0;
+  var lastTimestamp = null;
 
-  function render() {
+  // FPS 与 GL 错误采样。
+  var fpsFrames = 0;
+  var fpsWindowStart = null;
+  var fps = 0;
+  var glErrorCount = 0;
+  var glErrorName = "";
+
+  function render(timestamp) {
     hideGui();
 
     if (!hideControls) {
       showGui();
     }
+
+    if (lastTimestamp === null) {
+      lastTimestamp = timestamp;
+      fpsWindowStart = timestamp;
+    }
+    var dt = Math.min(0.1, (timestamp - lastTimestamp) / 1000);
+    lastTimestamp = timestamp;
+    elapsed += dt;
 
     tick += 0.0025 * menu.animationSpeed;
 
@@ -18157,37 +18217,93 @@ window.onload = function() {
     renderCanvas.width = renderCanvas.clientWidth;
     renderCanvas.height = renderCanvas.clientHeight;
 
-    glm.mat4.lookAt(
-      view,
-      [0, 0, 0],
-      [Math.cos(tick), Math.sin(tick * 0.555), Math.sin(tick)],
-      [0, 1, 0]
-    );
+    // 长距离推进：相机在 0.3..1.4 之间沿视线缓慢往返。近层球壳内缘 0.1R、
+    // 外缘 0.4R(=1.6)，把推进终点压在 1.4 可保证三层始终在视野内，
+    // 同时相机能依次穿过近/中/远层的密度与尺寸梯度，看出纵深视差。
+    // ?dolly= 仅用于无头环境下强制相机半径做验证，正常访问走时间曲线。
+    var dolly = params.dolly === undefined
+      ? 0.3 + 1.1 * (0.5 - 0.5 * Math.cos(elapsed * 0.12))
+      : parseFloat(params.dolly);
+    var az = elapsed * 0.05;
+    var eye = [
+      Math.cos(az) * dolly,
+      Math.sin(elapsed * 0.04) * dolly * 0.35,
+      Math.sin(az) * dolly
+    ];
+    glm.mat4.lookAt(view, eye, [0, 0, 0], [0, 1, 0]);
 
     var fov = (menu.fov / 360) * Math.PI * 2;
+    // far plane 给到 16，几何不会被硬切；far plane 边缘的消失完全交给
+    // shader 里按相机距离的 alpha 渐隐（0.85R..0.98R）。
     glm.mat4.perspective(
       projection,
       fov,
       renderCanvas.width / renderCanvas.height,
-      0.1,
-      8
+      0.05,
+      16
     );
 
+    // 每帧显式清屏并把主画布管线复位到不透明基线。原实现靠 skybox 立方壳
+    // 不透明铺满而从不清屏；星空通道会临时开启 additive 混合，必须有显式
+    // clear + 状态复位，否则 skybox 会在残留混合状态下逐帧叠加成白屏。
+    gl.disable(gl.BLEND);
+    gl.depthMask(true);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // 渲染队列：skybox（含 sun/nebula/亮星烘焙结果）先画，星空最后画。
+    // 星空在 starfield.render 内部切 additive + depthMask(false)，
+    // 亮星只能提亮，永远不会靠写深度盖住 sun 或 skybox。
     skybox.render(view, projection);
+    starfield.render(view, projection, elapsed);
+
+    // 采样 WebGL 错误；正常情况下计数应始终为 0、控制台无 warning。
+    var err = gl.getError();
+    if (err !== gl.NO_ERROR) {
+      glErrorCount += 1;
+      glErrorName = "0x" + err.toString(16);
+    }
+
+    fpsFrames += 1;
+    if (timestamp - fpsWindowStart >= 1000) {
+      fps =
+        (fpsFrames * 1000) / (timestamp - fpsWindowStart);
+      fpsFrames = 0;
+      fpsWindowStart = timestamp;
+
+      hud.textContent =
+        "fps: " + fps.toFixed(1) +
+        "\ndolly: " + dolly.toFixed(2) + " / R=" + STAR_RADIUS +
+        "\ntwinkle: x" + twinkleMultiplier + "  (T 切换, ?twinkle=0|0.5|1|2|4)" +
+        "\nlayers: far 14000 small/dim | mid 4500 | near 1000 large/bright" +
+        "\ncanvas css: " + renderCanvas.clientWidth + "x" + renderCanvas.clientHeight +
+        " attr: " + renderCanvas.width + "x" + renderCanvas.height +
+        "\ngl errors: " + glErrorCount +
+        (glErrorName ? " (" + glErrorName + ")" : "");
+    }
 
     requestAnimationFrame(render);
 
     setQueryString();
   }
 
-  render();
+  requestAnimationFrame(render);
 };
+
+function hashcode(str) {
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    var char = str.charCodeAt(i);
+    hash += (i + 1) * char;
+  }
+  return hash;
+}
 
 function generateRandomSeed() {
   return (Math.random() * 1000000000000000000).toString(36);
 }
-``
-},{"./skybox.js":94,"./space-3d.js":95,"filesaver.js":6,"gl-matrix":7,"jszip":22,"query-string":67}],94:[function(require,module,exports){
+
+},{"./skybox.js":94,"./space-3d.js":95,"./starfield.js":96,"filesaver.js":6,"gl-matrix":7,"jszip":22,"query-string":67}],94:[function(require,module,exports){
 // jshint -W097
 // jshint undef: true, unused: true
 /* globals require,__dirname,Float32Array,module*/
@@ -18206,9 +18322,12 @@ module.exports = function(renderCanvas) {
     self.initialize = function() {
         self.gl = renderCanvas.getContext("webgl");
         self.gl.pixelStorei(self.gl.UNPACK_FLIP_Y_WEBGL, true);
-        self.pSkybox = util.loadProgram(self.gl, "#version 100\nprecision highp float;\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\n\nattribute vec3 aPosition;\nattribute vec2 aUV;\n\nvarying vec2 uv;\n\nvoid main() {\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\n    uv = aUV;\n}\n\n\n__split__\n\n\n#version 100\nprecision highp float;\n\nuniform sampler2D uTexture;\n\nvarying vec2 uv;\n\nvoid main() {\n    gl_FragColor = texture2D(uTexture, uv);\n\n}\n");
+        self.pSkybox = util.loadProgram(self.gl, "#version 100\r\nprecision highp float;\r\n\r\nuniform mat4 uModel;\r\nuniform mat4 uView;\r\nuniform mat4 uProjection;\r\n\r\nattribute vec3 aPosition;\r\nattribute vec2 aUV;\r\n\r\nvarying vec2 uv;\r\n\r\nvoid main() {\r\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\r\n    uv = aUV;\r\n}\r\n\r\n\r\n__split__\r\n\r\n\r\n#version 100\r\nprecision highp float;\r\n\r\nuniform sampler2D uTexture;\r\n\r\nvarying vec2 uv;\r\n\r\nvoid main() {\r\n    gl_FragColor = texture2D(uTexture, uv);\r\n\r\n}\r\n");
         self.rSkybox = buildQuad(self.gl, self.pSkybox);
         self.textures = {};
+        // 镜头推进时相机可能远离原点，把贴图立方壳整体放大到始终包住相机路径。
+        // 只缩放顶点、不改 UV，贴图外观不变；默认 1 保持原有行为。
+        self.scale = 1.0;
     };
 
     self.setTextures = function(canvases) {
@@ -18227,39 +18346,42 @@ module.exports = function(renderCanvas) {
         self.gl.viewport(0, 0, renderCanvas.width, renderCanvas.height);
 
         var model = glm.mat4.create();
+        var scaled = glm.mat4.create();
+
+        function drawScaled(baseModel) {
+            glm.mat4.copy(scaled, baseModel);
+            glm.mat4.scale(scaled, scaled, [self.scale, self.scale, self.scale]);
+            self.pSkybox.setUniform("uModel", "Matrix4fv", false, scaled);
+            self.rSkybox.render();
+        }
 
         self.pSkybox.use();
         self.pSkybox.setUniform("uView", "Matrix4fv", false, view);
         self.pSkybox.setUniform("uProjection", "Matrix4fv", false, projection);
 
         self.textures.front.bind();
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        model = glm.mat4.create();
+        drawScaled(model);
 
         self.textures.back.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), Math.PI);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.left.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.right.bind();
         glm.mat4.rotateY(model, glm.mat4.create(), -Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.top.bind();
         glm.mat4.rotateX(model, glm.mat4.create(), Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
 
         self.textures.bottom.bind();
         glm.mat4.rotateX(model, glm.mat4.create(), -Math.PI/2);
-        self.pSkybox.setUniform("uModel", "Matrix4fv", false, model);
-        self.rSkybox.render();
+        drawScaled(model);
     };
 
 
@@ -18292,7 +18414,7 @@ function buildQuad(gl, program) {
     return renderable;
 }
 
-},{"./util.js":96,"./webgl.js":97,"gl-matrix":7}],95:[function(require,module,exports){
+},{"./util.js":97,"./webgl.js":98,"gl-matrix":7}],95:[function(require,module,exports){
 // jshint -W097
 // jshint undef: true, unused: true
 /* globals require,document,__dirname,Float32Array,module*/
@@ -18304,8 +18426,6 @@ var glm = require("gl-matrix");
 var webgl = require("./webgl.js");
 var util = require("./util.js");
 var rng = require("rng");
-
-var NSTARS = 100000;
 
 module.exports = function() {
   var self = this;
@@ -18327,42 +18447,19 @@ module.exports = function() {
     // Load the programs.
     self.pNebula = util.loadProgram(
       self.gl,
-      "#version 100\nprecision highp float;\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\n\nattribute vec3 aPosition;\nvarying vec3 pos;\n\nvoid main() {\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\n    pos = (uModel * vec4(aPosition, 1)).xyz;\n}\n\n\n__split__\n\n\n#version 100\nprecision highp float;\n\nuniform vec3 uColor;\nuniform vec3 uOffset;\nuniform float uScale;\nuniform float uIntensity;\nuniform float uFalloff;\n\nvarying vec3 pos;\n\n__noise4d__\n\nfloat noise(vec3 p) {\n    return 0.5 * cnoise(vec4(p, 0)) + 0.5;\n}\n\nfloat nebula(vec3 p) {\n    const int steps = 6;\n    float scale = pow(2.0, float(steps));\n    vec3 displace;\n    for (int i = 0; i < steps; i++) {\n        displace = vec3(\n            noise(p.xyz * scale + displace),\n            noise(p.yzx * scale + displace),\n            noise(p.zxy * scale + displace)\n        );\n        scale *= 0.5;\n    }\n    return noise(p * scale + displace);\n}\n\nvoid main() {\n    vec3 posn = normalize(pos) * uScale;\n    float c = min(1.0, nebula(posn + uOffset) * uIntensity);\n    c = pow(c, uFalloff);\n    gl_FragColor = vec4(uColor, c);\n\n}\n"
-    );
-    self.pPointStars = util.loadProgram(
-      self.gl,
-      "#version 100\nprecision highp float;\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\n\nattribute vec3 aPosition;\nattribute vec3 aColor;\n\nvarying vec3 color;\n\nvoid main() {\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\n    color = aColor;\n}\n\n\n__split__\n\n\n#version 100\nprecision highp float;\n\n\nvarying vec3 color;\n\nvoid main() {\n    gl_FragColor = vec4(color, 1.0);\n\n}\n"
+      "#version 100\r\nprecision highp float;\r\n\r\nuniform mat4 uModel;\r\nuniform mat4 uView;\r\nuniform mat4 uProjection;\r\n\r\nattribute vec3 aPosition;\r\nvarying vec3 pos;\r\n\r\nvoid main() {\r\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\r\n    pos = (uModel * vec4(aPosition, 1)).xyz;\r\n}\r\n\r\n\r\n__split__\r\n\r\n\r\n#version 100\r\nprecision highp float;\r\n\r\nuniform vec3 uColor;\r\nuniform vec3 uOffset;\r\nuniform float uScale;\r\nuniform float uIntensity;\r\nuniform float uFalloff;\r\n\r\nvarying vec3 pos;\r\n\r\n__noise4d__\r\n\r\nfloat noise(vec3 p) {\r\n    return 0.5 * cnoise(vec4(p, 0)) + 0.5;\r\n}\r\n\r\nfloat nebula(vec3 p) {\r\n    const int steps = 6;\r\n    float scale = pow(2.0, float(steps));\r\n    vec3 displace;\r\n    for (int i = 0; i < steps; i++) {\r\n        displace = vec3(\r\n            noise(p.xyz * scale + displace),\r\n            noise(p.yzx * scale + displace),\r\n            noise(p.zxy * scale + displace)\r\n        );\r\n        scale *= 0.5;\r\n    }\r\n    return noise(p * scale + displace);\r\n}\r\n\r\nvoid main() {\r\n    vec3 posn = normalize(pos) * uScale;\r\n    float c = min(1.0, nebula(posn + uOffset) * uIntensity);\r\n    c = pow(c, uFalloff);\r\n    gl_FragColor = vec4(uColor, c);\r\n\r\n}\r\n"
     );
     self.pStar = util.loadProgram(
       self.gl,
-      "#version 100\nprecision highp float;\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\n\nattribute vec3 aPosition;\nvarying vec3 pos;\n\nvoid main() {\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\n    pos = (uModel * vec4(aPosition, 1)).xyz;\n}\n\n\n__split__\n\n\n#version 100\nprecision highp float;\n\nuniform vec3 uPosition;\nuniform vec3 uColor;\nuniform float uSize;\nuniform float uFalloff;\n\nvarying vec3 pos;\n\nvoid main() {\n    vec3 posn = normalize(pos);\n    float d = 1.0 - clamp(dot(posn, normalize(uPosition)), 0.0, 1.0);\n    float i = exp(-(d - uSize) * uFalloff);\n    float o = clamp(i, 0.0, 1.0);\n    gl_FragColor = vec4(uColor + i, o);\n\n}\n"
+      "#version 100\r\nprecision highp float;\r\n\r\nuniform mat4 uModel;\r\nuniform mat4 uView;\r\nuniform mat4 uProjection;\r\n\r\nattribute vec3 aPosition;\r\nvarying vec3 pos;\r\n\r\nvoid main() {\r\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\r\n    pos = (uModel * vec4(aPosition, 1)).xyz;\r\n}\r\n\r\n\r\n__split__\r\n\r\n\r\n#version 100\r\nprecision highp float;\r\n\r\nuniform vec3 uPosition;\r\nuniform vec3 uColor;\r\nuniform float uSize;\r\nuniform float uFalloff;\r\n\r\nvarying vec3 pos;\r\n\r\nvoid main() {\r\n    vec3 posn = normalize(pos);\r\n    float d = 1.0 - clamp(dot(posn, normalize(uPosition)), 0.0, 1.0);\r\n    float i = exp(-(d - uSize) * uFalloff);\r\n    float o = clamp(i, 0.0, 1.0);\r\n    gl_FragColor = vec4(uColor + i, o);\r\n\r\n}\r\n"
     );
     self.pSun = util.loadProgram(
       self.gl,
-      "#version 100\nprecision highp float;\n\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\n\nattribute vec3 aPosition;\nvarying vec3 pos;\n\nvoid main() {\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\n    pos = (uModel * vec4(aPosition, 1)).xyz;\n}\n\n\n__split__\n\n\n#version 100\nprecision highp float;\n\nuniform vec3 uPosition;\nuniform vec3 uColor;\nuniform float uSize;\nuniform float uFalloff;\n\nvarying vec3 pos;\n\nvoid main() {\n    vec3 posn = normalize(pos);\n    float d = clamp(dot(posn, normalize(uPosition)), 0.0, 1.0);\n    float c = smoothstep(1.0 - uSize * 32.0, 1.0 - uSize, d);\n    c += pow(d, uFalloff) * 0.5;\n    vec3 color = mix(uColor, vec3(1,1,1), c);\n    gl_FragColor = vec4(color, c);\n\n}\n"
+      "#version 100\r\nprecision highp float;\r\n\r\nuniform mat4 uModel;\r\nuniform mat4 uView;\r\nuniform mat4 uProjection;\r\n\r\nattribute vec3 aPosition;\r\nvarying vec3 pos;\r\n\r\nvoid main() {\r\n    gl_Position = uProjection * uView * uModel * vec4(aPosition, 1);\r\n    pos = (uModel * vec4(aPosition, 1)).xyz;\r\n}\r\n\r\n\r\n__split__\r\n\r\n\r\n#version 100\r\nprecision highp float;\r\n\r\nuniform vec3 uPosition;\r\nuniform vec3 uColor;\r\nuniform float uSize;\r\nuniform float uFalloff;\r\n\r\nvarying vec3 pos;\r\n\r\nvoid main() {\r\n    vec3 posn = normalize(pos);\r\n    float d = clamp(dot(posn, normalize(uPosition)), 0.0, 1.0);\r\n    float c = smoothstep(1.0 - uSize * 32.0, 1.0 - uSize, d);\r\n    c += pow(d, uFalloff) * 0.5;\r\n    vec3 color = mix(uColor, vec3(1,1,1), c);\r\n    gl_FragColor = vec4(color, c);\r\n\r\n}\r\n"
     );
 
-    // Create the point stars renderable.
-    var rand = new rng.MT(hashcode("best seed ever") + 5000);
-    var position = new Float32Array(18 * NSTARS);
-    var color = new Float32Array(18 * NSTARS);
-    for (var i = 0; i < NSTARS; i++) {
-      var size = 0.05;
-      var pos = glm.vec3.random(glm.vec3.create(), 1.0);
-      var star = buildStar(size, pos, 128.0, rand);
-      position.set(star.position, i * 18);
-      color.set(star.color, i * 18);
-    }
-    var attribs = webgl.buildAttribs(self.gl, { aPosition: 3, aColor: 3 });
-    attribs.aPosition.buffer.set(position);
-    attribs.aColor.buffer.set(color);
-    var count = position.length / 9;
-    self.rPointStars = new webgl.Renderable(
-      self.gl,
-      self.pPointStars,
-      attribs,
-      count
-    );
+    // 三层视差点星已移至 src/starfield.js，在主画布上以单 draw call、
+    // additive + depthMask(false) 方式绘制，不再烘焙进离屏 skybox。
 
     // Create the nebula, sun, and star renderables.
     self.rNebula = buildBox(self.gl, self.pNebula);
@@ -18379,16 +18476,8 @@ module.exports = function() {
     self.gl.viewport(0, 0, params.resolution, params.resolution);
 
     // Initialize the point star parameters.
-    var rand = new rng.MT(hashcode(params.seed) + 1000);
-    var pStarParams = [];
-    while (params.pointStars) {
-      pStarParams.push({
-        rotation: randomRotation(rand)
-      });
-      if (rand.random() < 0.2) {
-        break;
-      }
-    }
+    // 点星改由主画布上的 src/starfield.js 单 draw call 三层视差渲染，
+    // 这里不再生成离屏点星参数（pointStars 开关保留，仅用于 GUI 兼容）。
 
     // Initialize the star parameters.
     var rand = new rng.MT(hashcode(params.seed) + 3000);
@@ -18482,29 +18571,12 @@ module.exports = function() {
       var dir = dirs[keys[i]];
       glm.mat4.lookAt(view, [0, 0, 0], dir.target, dir.up);
 
-      // Render the point stars.
-      self.pPointStars.use();
-      model = glm.mat4.create();
-      self.pPointStars.setUniform("uView", "Matrix4fv", false, view);
-      self.pPointStars.setUniform(
-        "uProjection",
-        "Matrix4fv",
-        false,
-        projection
-      );
-      for (var j = 0; j < pStarParams.length; j++) {
-        var ps = pStarParams[j];
-        glm.mat4.mul(model, ps.rotation, model);
-        self.pPointStars.setUniform("uModel", "Matrix4fv", false, model);
-        self.rPointStars.render();
-      }
-
       // Render the stars.
       self.pStar.use();
       self.pStar.setUniform("uView", "Matrix4fv", false, view);
       self.pStar.setUniform("uProjection", "Matrix4fv", false, projection);
       self.pStar.setUniform("uModel", "Matrix4fv", false, model);
-      for (j = 0; j < starParams.length; j++) {
+      for (var j = 0; j < starParams.length; j++) {
         var s = starParams[j];
         self.pStar.setUniform("uPosition", "3fv", s.pos);
         self.pStar.setUniform("uColor", "3fv", s.color);
@@ -18516,7 +18588,7 @@ module.exports = function() {
       // Render the nebulae.
       self.pNebula.use();
       model = glm.mat4.create();
-      for (j = 0; j < nebulaParams.length; j++) {
+      for (var j = 0; j < nebulaParams.length; j++) {
         var p = nebulaParams[j];
         self.pNebula.setUniform("uModel", "Matrix4fv", false, model);
         self.pNebula.setUniform("uView", "Matrix4fv", false, view);
@@ -18534,7 +18606,7 @@ module.exports = function() {
       self.pSun.setUniform("uView", "Matrix4fv", false, view);
       self.pSun.setUniform("uProjection", "Matrix4fv", false, projection);
       self.pSun.setUniform("uModel", "Matrix4fv", false, model);
-      for (j = 0; j < sunParams.length; j++) {
+      for (var j = 0; j < sunParams.length; j++) {
         var sun = sunParams[j];
         self.pSun.setUniform("uPosition", "3fv", sun.pos);
         self.pSun.setUniform("uColor", "3fv", sun.color);
@@ -18556,36 +18628,6 @@ module.exports = function() {
 
   self.initialize();
 };
-
-function buildStar(size, pos, dist, rand) {
-  var c = Math.pow(rand.random(), 4.0);
-  var color = [c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c];
-
-  var vertices = [
-    [-size, -size, 0],
-    [size, -size, 0],
-    [size, size, 0],
-    [-size, -size, 0],
-    [size, size, 0],
-    [-size, size, 0]
-  ];
-
-  var position = [];
-
-  for (var ii = 0; ii < 6; ii++) {
-    var rot = quatRotFromForward(pos);
-    glm.vec3.transformQuat(vertices[ii], vertices[ii], rot);
-    vertices[ii][0] += pos[0] * dist;
-    vertices[ii][1] += pos[1] * dist;
-    vertices[ii][2] += pos[2] * dist;
-    position.push.apply(position, vertices[ii]);
-  }
-
-  return {
-    position: position,
-    color: color
-  };
-}
 
 function buildBox(gl, program) {
   var position = [
@@ -18710,20 +18752,6 @@ function buildBox(gl, program) {
   return renderable;
 }
 
-function quatRotBetweenVecs(a, b) {
-  var theta = Math.acos(glm.vec3.dot(a, b));
-  var omega = glm.vec3.create();
-  glm.vec3.cross(omega, a, b);
-  glm.vec3.normalize(omega, omega);
-  var rot = glm.quat.create();
-  glm.quat.setAxisAngle(rot, omega, theta);
-  return rot;
-}
-
-function quatRotFromForward(b) {
-  return quatRotBetweenVecs(glm.vec3.fromValues(0, 0, -1), b);
-}
-
 function randomRotation(rand) {
   var rot = glm.mat4.create();
   glm.mat4.rotateX(rot, rot, rand.random() * Math.PI * 2);
@@ -18749,7 +18777,237 @@ function hashcode(str) {
   return hash;
 }
 
-},{"./util.js":96,"./webgl.js":97,"gl-matrix":7,"rng":84}],96:[function(require,module,exports){
+},{"./util.js":97,"./webgl.js":98,"gl-matrix":7,"rng":84}],96:[function(require,module,exports){
+// jshint -W097
+// jshint undef: true, unused: true
+/* globals require,__dirname,Float32Array,module*/
+
+"use strict";
+
+
+var rng = require("rng");
+var webgl = require("./webgl.js");
+
+// 三层视差参数表。所有层共用同一套 buffer、同一次 draw call，
+// 层间差异（密度/尺寸/alpha/频率区间）全部烘焙进顶点属性。
+// 半径均为球壳半径 R 的比例值；size 同样是 R 的比例半边长，
+// 实际世界半边长 = size * R，量级控制在亚视角，避免 additive 叠加洗白画面。
+//   layer 0 暗远：最密、最小、最暗，贴在球壳外缘
+//   layer 1 中等：密度/尺寸/亮度居中
+//   layer 2 亮近：最疏、最大、最亮，靠近相机
+var LAYERS = [
+  {
+    count: 14000,
+    radiusMin: 0.66,
+    radiusMax: 1.0,
+    sizeMin: 0.0008,
+    sizeMax: 0.0018,
+    alphaMin: 0.1,
+    alphaMax: 0.3,
+    freqMin: 0.6,
+    freqMax: 1.4
+  },
+  {
+    count: 4500,
+    radiusMin: 0.36,
+    radiusMax: 0.7,
+    sizeMin: 0.0016,
+    sizeMax: 0.004,
+    alphaMin: 0.3,
+    alphaMax: 0.62,
+    freqMin: 0.5,
+    freqMax: 1.1
+  },
+  {
+    count: 1000,
+    radiusMin: 0.1,
+    radiusMax: 0.4,
+    sizeMin: 0.0035,
+    sizeMax: 0.008,
+    alphaMin: 0.65,
+    alphaMax: 1.0,
+    freqMin: 0.3,
+    freqMax: 0.8
+  }
+];
+
+var VERTICES_PER_STAR = 6;
+
+// 距离渐隐区间（R 的比例）。
+// 近端渐隐终点 0.14R 与亮近层内缘 0.10R、最大半边长 0.008R 衔接：
+// 最靠近相机的大星点在扑屏前平滑变暗，而不是突然缩没或亮度断层。
+var FADE_NEAR_START = 0.06;
+var FADE_NEAR_END = 0.14;
+var FADE_FAR_START = 0.85;
+var FADE_FAR_END = 0.98;
+
+module.exports = function Starfield(gl, options) {
+  options = options || {};
+  var self = this;
+
+  var R = options.radius || 4.0;
+  var seed = options.seed || 0;
+
+  var vertSrc = "#version 100\nprecision highp float;\n\n// 三层视差星空（单 draw call）\n// 层间的密度/尺寸/alpha 差异全部在 CPU 侧烘焙进 aColor/aScale，\n// vertex shader 不按 aLayer 做分支，aLayer 仅作调试/回退标记。\n\nuniform mat4 uView;\nuniform mat4 uProjection;\nuniform float uTime;\nuniform float uTwinkle;\n\n// 相机空间距离渐隐区间（世界单位），由 CPU 按 far plane 与近层尺度计算\nuniform float uFadeNearStart;\nuniform float uFadeNearEnd;\nuniform float uFadeFarStart;\nuniform float uFadeFarEnd;\n\nattribute vec3 aPosition;   // 星点中心（世界坐标）\nattribute vec4 aColor;      // rgb + 基础 alpha（已含所在层的 alpha 区间）\nattribute vec2 aCorner;     // billboard 四角方向 [-1, 1]\nattribute float aLayer;     // 0=暗远 1=中等 2=亮近\nattribute float aPhase;     // CPU 预计算的闪烁相位\nattribute float aFrequency; // CPU 预计算的闪烁基础频率\nattribute float aScale;     // CPU 按层分配的 billboard 半边长（世界单位）\n\nvarying vec3 vColor;\nvarying float vAlpha;\nvarying vec2 vCorner;\n\nvoid main() {\n    vec4 viewCenter = uView * vec4(aPosition, 1.0);\n    float dist = -viewCenter.z;\n\n    // far plane 边缘按相机距离平滑渐隐，不硬切；\n    // 近端渐隐终点与近层最小半径/最大尺寸在 CPU 侧衔接，避免缩没或亮度断层。\n    float nearFade = smoothstep(uFadeNearStart, uFadeNearEnd, dist);\n    float farFade = 1.0 - smoothstep(uFadeFarStart, uFadeFarEnd, dist);\n    float distFade = nearFade * farFade;\n\n    // 相位与频率都是 CPU 预算好的顶点属性，这里只做正弦叠加。\n    // 调 ?twinkle 只缩放 uTwinkle，不重建缓冲，星点不会集体跳变。\n    // aLayer 无分支地参与幅度调制：暗远层闪烁幅度略大，亮近层更稳。\n    float layerMod = 1.0 - 0.15 * (aLayer / 2.0);\n    float t = uTime * aFrequency * uTwinkle;\n    float twinkle = (0.5\n        + 0.35 * sin(t + aPhase)\n        + 0.15 * sin(t * 2.7 + aPhase * 1.3)) * layerMod;\n\n    vColor = aColor.rgb;\n    vAlpha = aColor.a * twinkle * distFade;\n    vCorner = aCorner;\n\n    // 视图空间 billboard：世界尺寸固定，透视下近大远小，推进时天然带出纵深。\n    vec4 viewPos = viewCenter;\n    viewPos.xy += aCorner * aScale;\n    gl_Position = uProjection * viewPos;\n}\n";
+  var fragSrc = "#version 100\nprecision highp float;\n\n// 星点 fragment：只做 billboard 径向软边缘，不再有任何逐像素噪声。\n// 混合方式（additive）与 depthMask 在 CPU 渲染队列里配置。\n\nvarying vec3 vColor;\nvarying float vAlpha;\nvarying vec2 vCorner;\n\nvoid main() {\n    float r2 = dot(vCorner, vCorner);\n    if (r2 >= 1.0) {\n        discard;\n    }\n    float sprite = pow(1.0 - r2, 2.2);\n    gl_FragColor = vec4(vColor, vAlpha * sprite);\n}\n";
+  self.program = new webgl.Program(gl, vertSrc, fragSrc);
+
+  // ---- 多缓冲回退口子 ---------------------------------------------------
+  // 默认关闭：维持单 buffer、单 draw call。只有 Node 20 真机 profiler
+  // 证明顶点层分支（aLayer 分支）开销稳定超过帧时间 5% 时，才把这里翻成
+  // true 并按 LAYERS 拆成三套独立 buffer / 三次绘制；在拿到该证据前不动。
+  self.multiBufferFallbackEnabled = false;
+
+  // ?twinkle 只缩放这个乘数，缓冲不重建，CPU 预计算的随机相位保持不变。
+  self.twinkle = options.twinkle === undefined ? 1.0 : options.twinkle;
+
+  var totalStars = 0;
+  for (var l = 0; l < LAYERS.length; l++) {
+    totalStars += LAYERS[l].count;
+  }
+  var totalVerts = totalStars * VERTICES_PER_STAR;
+
+  var positions = new Float32Array(totalVerts * 3);
+  var colors = new Float32Array(totalVerts * 4);
+  var corners = new Float32Array(totalVerts * 2);
+  var layers = new Float32Array(totalVerts);
+  var phases = new Float32Array(totalVerts);
+  var frequencies = new Float32Array(totalVerts);
+  var scales = new Float32Array(totalVerts);
+
+  // 每颗星两个三角形组成的 billboard 四角（z=0，shader 里在视图空间展开）。
+  var cornerTable = [
+    -1, -1,
+    1, -1,
+    1, 1,
+    -1, -1,
+    1, 1,
+    -1, 1
+  ];
+
+  var rand = new rng.MT(seed);
+  var cursor = 0;
+
+  for (var li = 0; li < LAYERS.length; li++) {
+    var cfg = LAYERS[li];
+    var rMin3 = Math.pow(cfg.radiusMin * R, 3);
+    var rMax3 = Math.pow(cfg.radiusMax * R, 3);
+
+    for (var s = 0; s < cfg.count; s++) {
+      // 球壳内均匀取方向。
+      var z = rand.random() * 2.0 - 1.0;
+      var theta = rand.random() * Math.PI * 2.0;
+      var ring = Math.sqrt(Math.max(0.0, 1.0 - z * z));
+      var dx = ring * Math.cos(theta);
+      var dy = z;
+      var dz = ring * Math.sin(theta);
+
+      // 体积均匀的半径采样，保证"远密近疏"是层间参数而非采样偏差。
+      var dist = Math.pow(rMin3 + rand.random() * (rMax3 - rMin3), 1 / 3);
+
+      var size =
+        (cfg.sizeMin + rand.random() * (cfg.sizeMax - cfg.sizeMin)) * R;
+      var alpha =
+        cfg.alphaMin + rand.random() * (cfg.alphaMax - cfg.alphaMin);
+
+      // 闪烁相位与基础频率在 CPU 侧预计算，逐星随机、错相。
+      var phase = rand.random() * Math.PI * 2.0;
+      var frequency =
+        cfg.freqMin + rand.random() * (cfg.freqMax - cfg.freqMin);
+
+      // 轻微冷暖偏移，保持白色基调，additive 混合下层次仍由 alpha 决定。
+      var tintR = 0.85 + rand.random() * 0.15;
+      var tintG = 0.85 + rand.random() * 0.15;
+      var tintB = 0.85 + rand.random() * 0.15;
+
+      for (var v = 0; v < VERTICES_PER_STAR; v++) {
+        var idx = cursor + v;
+        positions[idx * 3] = dx * dist;
+        positions[idx * 3 + 1] = dy * dist;
+        positions[idx * 3 + 2] = dz * dist;
+
+        colors[idx * 4] = alpha * tintR;
+        colors[idx * 4 + 1] = alpha * tintG;
+        colors[idx * 4 + 2] = alpha * tintB;
+        colors[idx * 4 + 3] = alpha;
+
+        corners[idx * 2] = cornerTable[v * 2];
+        corners[idx * 2 + 1] = cornerTable[v * 2 + 1];
+
+        layers[idx] = li;
+        phases[idx] = phase;
+        frequencies[idx] = frequency;
+        scales[idx] = size;
+      }
+      cursor += VERTICES_PER_STAR;
+    }
+  }
+
+  // 单套 buffer：七层属性交织在同一批顶点里，一次 drawArrays 提交。
+  var attribs = webgl.buildAttribs(gl, {
+    aPosition: 3,
+    aColor: 4,
+    aCorner: 2,
+    aLayer: 1,
+    aPhase: 1,
+    aFrequency: 1,
+    aScale: 1
+  });
+  attribs.aPosition.buffer.set(positions);
+  attribs.aColor.buffer.set(colors);
+  attribs.aCorner.buffer.set(corners);
+  attribs.aLayer.buffer.set(layers);
+  attribs.aPhase.buffer.set(phases);
+  attribs.aFrequency.buffer.set(frequencies);
+  attribs.aScale.buffer.set(scales);
+
+  self.renderable = new webgl.Renderable(
+    gl,
+    self.program,
+    attribs,
+    totalVerts / 3
+  );
+
+  // 运行时只改频率乘数，绝不重算相位/重建缓冲。
+  self.setTwinkle = function(value) {
+    self.twinkle = value;
+  };
+
+  self.render = function(view, projection, time) {
+    var p = self.program;
+    p.use();
+    p.setUniform("uView", "Matrix4fv", false, view);
+    p.setUniform("uProjection", "Matrix4fv", false, projection);
+    p.setUniform("uTime", "1f", time);
+    p.setUniform("uTwinkle", "1f", self.twinkle);
+    p.setUniform("uFadeNearStart", "1f", FADE_NEAR_START * R);
+    p.setUniform("uFadeNearEnd", "1f", FADE_NEAR_END * R);
+    p.setUniform("uFadeFarStart", "1f", FADE_FAR_START * R);
+    p.setUniform("uFadeFarEnd", "1f", FADE_FAR_END * R);
+
+    // 渲染队列约定：skybox 先画，星空最后画。
+    // additive 混合 + 不写深度：亮星只能提亮画面，不能靠深度盖住 sun/skybox。
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.depthMask(false);
+
+    self.renderable.render();
+
+    // 完整恢复进入前的管线状态，尤其要 disable BLEND：
+    // 主画布默认不混合，skybox 靠不透明覆盖逐帧铺满，残留的混合开关会让
+    // 未清屏的 skybox 逐帧叠加成白屏。
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.blendFuncSeparate(
+      gl.SRC_ALPHA,
+      gl.ONE_MINUS_SRC_ALPHA,
+      gl.ZERO,
+      gl.ONE
+    );
+  };
+};
+
+},{"./webgl.js":98,"rng":84}],97:[function(require,module,exports){
 (function (Buffer){
 // jshint -W097
 // jshint undef: true, unused: true
@@ -18761,7 +19019,7 @@ function hashcode(str) {
 var webgl = require("./webgl.js");
 
 module.exports.loadProgram = function(gl, source) {
-    var noise4d = Buffer("Ly8KLy8gR0xTTCB0ZXh0dXJlbGVzcyBjbGFzc2ljIDREIG5vaXNlICJjbm9pc2UiLAovLyB3aXRoIGFuIFJTTC1zdHlsZSBwZXJpb2RpYyB2YXJpYW50ICJwbm9pc2UiLgovLyBBdXRob3I6ICBTdGVmYW4gR3VzdGF2c29uIChzdGVmYW4uZ3VzdGF2c29uQGxpdS5zZSkKLy8gVmVyc2lvbjogMjAxMS0wOC0yMgovLwovLyBNYW55IHRoYW5rcyB0byBJYW4gTWNFd2FuIG9mIEFzaGltYSBBcnRzIGZvciB0aGUKLy8gaWRlYXMgZm9yIHBlcm11dGF0aW9uIGFuZCBncmFkaWVudCBzZWxlY3Rpb24uCi8vCi8vIENvcHlyaWdodCAoYykgMjAxMSBTdGVmYW4gR3VzdGF2c29uLiBBbGwgcmlnaHRzIHJlc2VydmVkLgovLyBEaXN0cmlidXRlZCB1bmRlciB0aGUgTUlUIGxpY2Vuc2UuIFNlZSBMSUNFTlNFIGZpbGUuCi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9hc2hpbWEvd2ViZ2wtbm9pc2UKLy8KCnZlYzQgbW9kMjg5KHZlYzQgeCkKewogIHJldHVybiB4IC0gZmxvb3IoeCAqICgxLjAgLyAyODkuMCkpICogMjg5LjA7Cn0KCnZlYzQgcGVybXV0ZSh2ZWM0IHgpCnsKICByZXR1cm4gbW9kMjg5KCgoeCozNC4wKSsxLjApKngpOwp9Cgp2ZWM0IHRheWxvckludlNxcnQodmVjNCByKQp7CiAgcmV0dXJuIDEuNzkyODQyOTE0MDAxNTkgLSAwLjg1MzczNDcyMDk1MzE0ICogcjsKfQoKdmVjNCBmYWRlKHZlYzQgdCkgewogIHJldHVybiB0KnQqdCoodCoodCo2LjAtMTUuMCkrMTAuMCk7Cn0KCi8vIENsYXNzaWMgUGVybGluIG5vaXNlCmZsb2F0IGNub2lzZSh2ZWM0IFApCnsKICB2ZWM0IFBpMCA9IGZsb29yKFApOyAvLyBJbnRlZ2VyIHBhcnQgZm9yIGluZGV4aW5nCiAgdmVjNCBQaTEgPSBQaTAgKyAxLjA7IC8vIEludGVnZXIgcGFydCArIDEKICBQaTAgPSBtb2QyODkoUGkwKTsKICBQaTEgPSBtb2QyODkoUGkxKTsKICB2ZWM0IFBmMCA9IGZyYWN0KFApOyAvLyBGcmFjdGlvbmFsIHBhcnQgZm9yIGludGVycG9sYXRpb24KICB2ZWM0IFBmMSA9IFBmMCAtIDEuMDsgLy8gRnJhY3Rpb25hbCBwYXJ0IC0gMS4wCiAgdmVjNCBpeCA9IHZlYzQoUGkwLngsIFBpMS54LCBQaTAueCwgUGkxLngpOwogIHZlYzQgaXkgPSB2ZWM0KFBpMC55eSwgUGkxLnl5KTsKICB2ZWM0IGl6MCA9IHZlYzQoUGkwLnp6enopOwogIHZlYzQgaXoxID0gdmVjNChQaTEuenp6eik7CiAgdmVjNCBpdzAgPSB2ZWM0KFBpMC53d3d3KTsKICB2ZWM0IGl3MSA9IHZlYzQoUGkxLnd3d3cpOwoKICB2ZWM0IGl4eSA9IHBlcm11dGUocGVybXV0ZShpeCkgKyBpeSk7CiAgdmVjNCBpeHkwID0gcGVybXV0ZShpeHkgKyBpejApOwogIHZlYzQgaXh5MSA9IHBlcm11dGUoaXh5ICsgaXoxKTsKICB2ZWM0IGl4eTAwID0gcGVybXV0ZShpeHkwICsgaXcwKTsKICB2ZWM0IGl4eTAxID0gcGVybXV0ZShpeHkwICsgaXcxKTsKICB2ZWM0IGl4eTEwID0gcGVybXV0ZShpeHkxICsgaXcwKTsKICB2ZWM0IGl4eTExID0gcGVybXV0ZShpeHkxICsgaXcxKTsKCiAgdmVjNCBneDAwID0gaXh5MDAgKiAoMS4wIC8gNy4wKTsKICB2ZWM0IGd5MDAgPSBmbG9vcihneDAwKSAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3owMCA9IGZsb29yKGd5MDApICogKDEuMCAvIDYuMCk7CiAgZ3gwMCA9IGZyYWN0KGd4MDApIC0gMC41OwogIGd5MDAgPSBmcmFjdChneTAwKSAtIDAuNTsKICBnejAwID0gZnJhY3QoZ3owMCkgLSAwLjU7CiAgdmVjNCBndzAwID0gdmVjNCgwLjc1KSAtIGFicyhneDAwKSAtIGFicyhneTAwKSAtIGFicyhnejAwKTsKICB2ZWM0IHN3MDAgPSBzdGVwKGd3MDAsIHZlYzQoMC4wKSk7CiAgZ3gwMCAtPSBzdzAwICogKHN0ZXAoMC4wLCBneDAwKSAtIDAuNSk7CiAgZ3kwMCAtPSBzdzAwICogKHN0ZXAoMC4wLCBneTAwKSAtIDAuNSk7CgogIHZlYzQgZ3gwMSA9IGl4eTAxICogKDEuMCAvIDcuMCk7CiAgdmVjNCBneTAxID0gZmxvb3IoZ3gwMSkgKiAoMS4wIC8gNy4wKTsKICB2ZWM0IGd6MDEgPSBmbG9vcihneTAxKSAqICgxLjAgLyA2LjApOwogIGd4MDEgPSBmcmFjdChneDAxKSAtIDAuNTsKICBneTAxID0gZnJhY3QoZ3kwMSkgLSAwLjU7CiAgZ3owMSA9IGZyYWN0KGd6MDEpIC0gMC41OwogIHZlYzQgZ3cwMSA9IHZlYzQoMC43NSkgLSBhYnMoZ3gwMSkgLSBhYnMoZ3kwMSkgLSBhYnMoZ3owMSk7CiAgdmVjNCBzdzAxID0gc3RlcChndzAxLCB2ZWM0KDAuMCkpOwogIGd4MDEgLT0gc3cwMSAqIChzdGVwKDAuMCwgZ3gwMSkgLSAwLjUpOwogIGd5MDEgLT0gc3cwMSAqIChzdGVwKDAuMCwgZ3kwMSkgLSAwLjUpOwoKICB2ZWM0IGd4MTAgPSBpeHkxMCAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3kxMCA9IGZsb29yKGd4MTApICogKDEuMCAvIDcuMCk7CiAgdmVjNCBnejEwID0gZmxvb3IoZ3kxMCkgKiAoMS4wIC8gNi4wKTsKICBneDEwID0gZnJhY3QoZ3gxMCkgLSAwLjU7CiAgZ3kxMCA9IGZyYWN0KGd5MTApIC0gMC41OwogIGd6MTAgPSBmcmFjdChnejEwKSAtIDAuNTsKICB2ZWM0IGd3MTAgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MTApIC0gYWJzKGd5MTApIC0gYWJzKGd6MTApOwogIHZlYzQgc3cxMCA9IHN0ZXAoZ3cxMCwgdmVjNCgwLjApKTsKICBneDEwIC09IHN3MTAgKiAoc3RlcCgwLjAsIGd4MTApIC0gMC41KTsKICBneTEwIC09IHN3MTAgKiAoc3RlcCgwLjAsIGd5MTApIC0gMC41KTsKCiAgdmVjNCBneDExID0gaXh5MTEgKiAoMS4wIC8gNy4wKTsKICB2ZWM0IGd5MTEgPSBmbG9vcihneDExKSAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3oxMSA9IGZsb29yKGd5MTEpICogKDEuMCAvIDYuMCk7CiAgZ3gxMSA9IGZyYWN0KGd4MTEpIC0gMC41OwogIGd5MTEgPSBmcmFjdChneTExKSAtIDAuNTsKICBnejExID0gZnJhY3QoZ3oxMSkgLSAwLjU7CiAgdmVjNCBndzExID0gdmVjNCgwLjc1KSAtIGFicyhneDExKSAtIGFicyhneTExKSAtIGFicyhnejExKTsKICB2ZWM0IHN3MTEgPSBzdGVwKGd3MTEsIHZlYzQoMC4wKSk7CiAgZ3gxMSAtPSBzdzExICogKHN0ZXAoMC4wLCBneDExKSAtIDAuNSk7CiAgZ3kxMSAtPSBzdzExICogKHN0ZXAoMC4wLCBneTExKSAtIDAuNSk7CgogIHZlYzQgZzAwMDAgPSB2ZWM0KGd4MDAueCxneTAwLngsZ3owMC54LGd3MDAueCk7CiAgdmVjNCBnMTAwMCA9IHZlYzQoZ3gwMC55LGd5MDAueSxnejAwLnksZ3cwMC55KTsKICB2ZWM0IGcwMTAwID0gdmVjNChneDAwLnosZ3kwMC56LGd6MDAueixndzAwLnopOwogIHZlYzQgZzExMDAgPSB2ZWM0KGd4MDAudyxneTAwLncsZ3owMC53LGd3MDAudyk7CiAgdmVjNCBnMDAxMCA9IHZlYzQoZ3gxMC54LGd5MTAueCxnejEwLngsZ3cxMC54KTsKICB2ZWM0IGcxMDEwID0gdmVjNChneDEwLnksZ3kxMC55LGd6MTAueSxndzEwLnkpOwogIHZlYzQgZzAxMTAgPSB2ZWM0KGd4MTAueixneTEwLnosZ3oxMC56LGd3MTAueik7CiAgdmVjNCBnMTExMCA9IHZlYzQoZ3gxMC53LGd5MTAudyxnejEwLncsZ3cxMC53KTsKICB2ZWM0IGcwMDAxID0gdmVjNChneDAxLngsZ3kwMS54LGd6MDEueCxndzAxLngpOwogIHZlYzQgZzEwMDEgPSB2ZWM0KGd4MDEueSxneTAxLnksZ3owMS55LGd3MDEueSk7CiAgdmVjNCBnMDEwMSA9IHZlYzQoZ3gwMS56LGd5MDEueixnejAxLnosZ3cwMS56KTsKICB2ZWM0IGcxMTAxID0gdmVjNChneDAxLncsZ3kwMS53LGd6MDEudyxndzAxLncpOwogIHZlYzQgZzAwMTEgPSB2ZWM0KGd4MTEueCxneTExLngsZ3oxMS54LGd3MTEueCk7CiAgdmVjNCBnMTAxMSA9IHZlYzQoZ3gxMS55LGd5MTEueSxnejExLnksZ3cxMS55KTsKICB2ZWM0IGcwMTExID0gdmVjNChneDExLnosZ3kxMS56LGd6MTEueixndzExLnopOwogIHZlYzQgZzExMTEgPSB2ZWM0KGd4MTEudyxneTExLncsZ3oxMS53LGd3MTEudyk7CgogIHZlYzQgbm9ybTAwID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAwMCwgZzAwMDApLCBkb3QoZzAxMDAsIGcwMTAwKSwgZG90KGcxMDAwLCBnMTAwMCksIGRvdChnMTEwMCwgZzExMDApKSk7CiAgZzAwMDAgKj0gbm9ybTAwLng7CiAgZzAxMDAgKj0gbm9ybTAwLnk7CiAgZzEwMDAgKj0gbm9ybTAwLno7CiAgZzExMDAgKj0gbm9ybTAwLnc7CgogIHZlYzQgbm9ybTAxID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAwMSwgZzAwMDEpLCBkb3QoZzAxMDEsIGcwMTAxKSwgZG90KGcxMDAxLCBnMTAwMSksIGRvdChnMTEwMSwgZzExMDEpKSk7CiAgZzAwMDEgKj0gbm9ybTAxLng7CiAgZzAxMDEgKj0gbm9ybTAxLnk7CiAgZzEwMDEgKj0gbm9ybTAxLno7CiAgZzExMDEgKj0gbm9ybTAxLnc7CgogIHZlYzQgbm9ybTEwID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAxMCwgZzAwMTApLCBkb3QoZzAxMTAsIGcwMTEwKSwgZG90KGcxMDEwLCBnMTAxMCksIGRvdChnMTExMCwgZzExMTApKSk7CiAgZzAwMTAgKj0gbm9ybTEwLng7CiAgZzAxMTAgKj0gbm9ybTEwLnk7CiAgZzEwMTAgKj0gbm9ybTEwLno7CiAgZzExMTAgKj0gbm9ybTEwLnc7CgogIHZlYzQgbm9ybTExID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAxMSwgZzAwMTEpLCBkb3QoZzAxMTEsIGcwMTExKSwgZG90KGcxMDExLCBnMTAxMSksIGRvdChnMTExMSwgZzExMTEpKSk7CiAgZzAwMTEgKj0gbm9ybTExLng7CiAgZzAxMTEgKj0gbm9ybTExLnk7CiAgZzEwMTEgKj0gbm9ybTExLno7CiAgZzExMTEgKj0gbm9ybTExLnc7CgogIGZsb2F0IG4wMDAwID0gZG90KGcwMDAwLCBQZjApOwogIGZsb2F0IG4xMDAwID0gZG90KGcxMDAwLCB2ZWM0KFBmMS54LCBQZjAueXp3KSk7CiAgZmxvYXQgbjAxMDAgPSBkb3QoZzAxMDAsIHZlYzQoUGYwLngsIFBmMS55LCBQZjAuencpKTsKICBmbG9hdCBuMTEwMCA9IGRvdChnMTEwMCwgdmVjNChQZjEueHksIFBmMC56dykpOwogIGZsb2F0IG4wMDEwID0gZG90KGcwMDEwLCB2ZWM0KFBmMC54eSwgUGYxLnosIFBmMC53KSk7CiAgZmxvYXQgbjEwMTAgPSBkb3QoZzEwMTAsIHZlYzQoUGYxLngsIFBmMC55LCBQZjEueiwgUGYwLncpKTsKICBmbG9hdCBuMDExMCA9IGRvdChnMDExMCwgdmVjNChQZjAueCwgUGYxLnl6LCBQZjAudykpOwogIGZsb2F0IG4xMTEwID0gZG90KGcxMTEwLCB2ZWM0KFBmMS54eXosIFBmMC53KSk7CiAgZmxvYXQgbjAwMDEgPSBkb3QoZzAwMDEsIHZlYzQoUGYwLnh5eiwgUGYxLncpKTsKICBmbG9hdCBuMTAwMSA9IGRvdChnMTAwMSwgdmVjNChQZjEueCwgUGYwLnl6LCBQZjEudykpOwogIGZsb2F0IG4wMTAxID0gZG90KGcwMTAxLCB2ZWM0KFBmMC54LCBQZjEueSwgUGYwLnosIFBmMS53KSk7CiAgZmxvYXQgbjExMDEgPSBkb3QoZzExMDEsIHZlYzQoUGYxLnh5LCBQZjAueiwgUGYxLncpKTsKICBmbG9hdCBuMDAxMSA9IGRvdChnMDAxMSwgdmVjNChQZjAueHksIFBmMS56dykpOwogIGZsb2F0IG4xMDExID0gZG90KGcxMDExLCB2ZWM0KFBmMS54LCBQZjAueSwgUGYxLnp3KSk7CiAgZmxvYXQgbjAxMTEgPSBkb3QoZzAxMTEsIHZlYzQoUGYwLngsIFBmMS55encpKTsKICBmbG9hdCBuMTExMSA9IGRvdChnMTExMSwgUGYxKTsKCiAgdmVjNCBmYWRlX3h5encgPSBmYWRlKFBmMCk7CiAgdmVjNCBuXzB3ID0gbWl4KHZlYzQobjAwMDAsIG4xMDAwLCBuMDEwMCwgbjExMDApLCB2ZWM0KG4wMDAxLCBuMTAwMSwgbjAxMDEsIG4xMTAxKSwgZmFkZV94eXp3LncpOwogIHZlYzQgbl8xdyA9IG1peCh2ZWM0KG4wMDEwLCBuMTAxMCwgbjAxMTAsIG4xMTEwKSwgdmVjNChuMDAxMSwgbjEwMTEsIG4wMTExLCBuMTExMSksIGZhZGVfeHl6dy53KTsKICB2ZWM0IG5fencgPSBtaXgobl8wdywgbl8xdywgZmFkZV94eXp3LnopOwogIHZlYzIgbl95encgPSBtaXgobl96dy54eSwgbl96dy56dywgZmFkZV94eXp3LnkpOwogIGZsb2F0IG5feHl6dyA9IG1peChuX3l6dy54LCBuX3l6dy55LCBmYWRlX3h5encueCk7CiAgcmV0dXJuIDIuMiAqIG5feHl6dzsKfQoKLy8gQ2xhc3NpYyBQZXJsaW4gbm9pc2UsIHBlcmlvZGljIHZlcnNpb24KZmxvYXQgcG5vaXNlKHZlYzQgUCwgdmVjNCByZXApCnsKICB2ZWM0IFBpMCA9IG1vZChmbG9vcihQKSwgcmVwKTsgLy8gSW50ZWdlciBwYXJ0IG1vZHVsbyByZXAKICB2ZWM0IFBpMSA9IG1vZChQaTAgKyAxLjAsIHJlcCk7IC8vIEludGVnZXIgcGFydCArIDEgbW9kIHJlcAogIFBpMCA9IG1vZDI4OShQaTApOwogIFBpMSA9IG1vZDI4OShQaTEpOwogIHZlYzQgUGYwID0gZnJhY3QoUCk7IC8vIEZyYWN0aW9uYWwgcGFydCBmb3IgaW50ZXJwb2xhdGlvbgogIHZlYzQgUGYxID0gUGYwIC0gMS4wOyAvLyBGcmFjdGlvbmFsIHBhcnQgLSAxLjAKICB2ZWM0IGl4ID0gdmVjNChQaTAueCwgUGkxLngsIFBpMC54LCBQaTEueCk7CiAgdmVjNCBpeSA9IHZlYzQoUGkwLnl5LCBQaTEueXkpOwogIHZlYzQgaXowID0gdmVjNChQaTAuenp6eik7CiAgdmVjNCBpejEgPSB2ZWM0KFBpMS56enp6KTsKICB2ZWM0IGl3MCA9IHZlYzQoUGkwLnd3d3cpOwogIHZlYzQgaXcxID0gdmVjNChQaTEud3d3dyk7CgogIHZlYzQgaXh5ID0gcGVybXV0ZShwZXJtdXRlKGl4KSArIGl5KTsKICB2ZWM0IGl4eTAgPSBwZXJtdXRlKGl4eSArIGl6MCk7CiAgdmVjNCBpeHkxID0gcGVybXV0ZShpeHkgKyBpejEpOwogIHZlYzQgaXh5MDAgPSBwZXJtdXRlKGl4eTAgKyBpdzApOwogIHZlYzQgaXh5MDEgPSBwZXJtdXRlKGl4eTAgKyBpdzEpOwogIHZlYzQgaXh5MTAgPSBwZXJtdXRlKGl4eTEgKyBpdzApOwogIHZlYzQgaXh5MTEgPSBwZXJtdXRlKGl4eTEgKyBpdzEpOwoKICB2ZWM0IGd4MDAgPSBpeHkwMCAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3kwMCA9IGZsb29yKGd4MDApICogKDEuMCAvIDcuMCk7CiAgdmVjNCBnejAwID0gZmxvb3IoZ3kwMCkgKiAoMS4wIC8gNi4wKTsKICBneDAwID0gZnJhY3QoZ3gwMCkgLSAwLjU7CiAgZ3kwMCA9IGZyYWN0KGd5MDApIC0gMC41OwogIGd6MDAgPSBmcmFjdChnejAwKSAtIDAuNTsKICB2ZWM0IGd3MDAgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MDApIC0gYWJzKGd5MDApIC0gYWJzKGd6MDApOwogIHZlYzQgc3cwMCA9IHN0ZXAoZ3cwMCwgdmVjNCgwLjApKTsKICBneDAwIC09IHN3MDAgKiAoc3RlcCgwLjAsIGd4MDApIC0gMC41KTsKICBneTAwIC09IHN3MDAgKiAoc3RlcCgwLjAsIGd5MDApIC0gMC41KTsKCiAgdmVjNCBneDAxID0gaXh5MDEgKiAoMS4wIC8gNy4wKTsKICB2ZWM0IGd5MDEgPSBmbG9vcihneDAxKSAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3owMSA9IGZsb29yKGd5MDEpICogKDEuMCAvIDYuMCk7CiAgZ3gwMSA9IGZyYWN0KGd4MDEpIC0gMC41OwogIGd5MDEgPSBmcmFjdChneTAxKSAtIDAuNTsKICBnejAxID0gZnJhY3QoZ3owMSkgLSAwLjU7CiAgdmVjNCBndzAxID0gdmVjNCgwLjc1KSAtIGFicyhneDAxKSAtIGFicyhneTAxKSAtIGFicyhnejAxKTsKICB2ZWM0IHN3MDEgPSBzdGVwKGd3MDEsIHZlYzQoMC4wKSk7CiAgZ3gwMSAtPSBzdzAxICogKHN0ZXAoMC4wLCBneDAxKSAtIDAuNSk7CiAgZ3kwMSAtPSBzdzAxICogKHN0ZXAoMC4wLCBneTAxKSAtIDAuNSk7CgogIHZlYzQgZ3gxMCA9IGl4eTEwICogKDEuMCAvIDcuMCk7CiAgdmVjNCBneTEwID0gZmxvb3IoZ3gxMCkgKiAoMS4wIC8gNy4wKTsKICB2ZWM0IGd6MTAgPSBmbG9vcihneTEwKSAqICgxLjAgLyA2LjApOwogIGd4MTAgPSBmcmFjdChneDEwKSAtIDAuNTsKICBneTEwID0gZnJhY3QoZ3kxMCkgLSAwLjU7CiAgZ3oxMCA9IGZyYWN0KGd6MTApIC0gMC41OwogIHZlYzQgZ3cxMCA9IHZlYzQoMC43NSkgLSBhYnMoZ3gxMCkgLSBhYnMoZ3kxMCkgLSBhYnMoZ3oxMCk7CiAgdmVjNCBzdzEwID0gc3RlcChndzEwLCB2ZWM0KDAuMCkpOwogIGd4MTAgLT0gc3cxMCAqIChzdGVwKDAuMCwgZ3gxMCkgLSAwLjUpOwogIGd5MTAgLT0gc3cxMCAqIChzdGVwKDAuMCwgZ3kxMCkgLSAwLjUpOwoKICB2ZWM0IGd4MTEgPSBpeHkxMSAqICgxLjAgLyA3LjApOwogIHZlYzQgZ3kxMSA9IGZsb29yKGd4MTEpICogKDEuMCAvIDcuMCk7CiAgdmVjNCBnejExID0gZmxvb3IoZ3kxMSkgKiAoMS4wIC8gNi4wKTsKICBneDExID0gZnJhY3QoZ3gxMSkgLSAwLjU7CiAgZ3kxMSA9IGZyYWN0KGd5MTEpIC0gMC41OwogIGd6MTEgPSBmcmFjdChnejExKSAtIDAuNTsKICB2ZWM0IGd3MTEgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MTEpIC0gYWJzKGd5MTEpIC0gYWJzKGd6MTEpOwogIHZlYzQgc3cxMSA9IHN0ZXAoZ3cxMSwgdmVjNCgwLjApKTsKICBneDExIC09IHN3MTEgKiAoc3RlcCgwLjAsIGd4MTEpIC0gMC41KTsKICBneTExIC09IHN3MTEgKiAoc3RlcCgwLjAsIGd5MTEpIC0gMC41KTsKCiAgdmVjNCBnMDAwMCA9IHZlYzQoZ3gwMC54LGd5MDAueCxnejAwLngsZ3cwMC54KTsKICB2ZWM0IGcxMDAwID0gdmVjNChneDAwLnksZ3kwMC55LGd6MDAueSxndzAwLnkpOwogIHZlYzQgZzAxMDAgPSB2ZWM0KGd4MDAueixneTAwLnosZ3owMC56LGd3MDAueik7CiAgdmVjNCBnMTEwMCA9IHZlYzQoZ3gwMC53LGd5MDAudyxnejAwLncsZ3cwMC53KTsKICB2ZWM0IGcwMDEwID0gdmVjNChneDEwLngsZ3kxMC54LGd6MTAueCxndzEwLngpOwogIHZlYzQgZzEwMTAgPSB2ZWM0KGd4MTAueSxneTEwLnksZ3oxMC55LGd3MTAueSk7CiAgdmVjNCBnMDExMCA9IHZlYzQoZ3gxMC56LGd5MTAueixnejEwLnosZ3cxMC56KTsKICB2ZWM0IGcxMTEwID0gdmVjNChneDEwLncsZ3kxMC53LGd6MTAudyxndzEwLncpOwogIHZlYzQgZzAwMDEgPSB2ZWM0KGd4MDEueCxneTAxLngsZ3owMS54LGd3MDEueCk7CiAgdmVjNCBnMTAwMSA9IHZlYzQoZ3gwMS55LGd5MDEueSxnejAxLnksZ3cwMS55KTsKICB2ZWM0IGcwMTAxID0gdmVjNChneDAxLnosZ3kwMS56LGd6MDEueixndzAxLnopOwogIHZlYzQgZzExMDEgPSB2ZWM0KGd4MDEudyxneTAxLncsZ3owMS53LGd3MDEudyk7CiAgdmVjNCBnMDAxMSA9IHZlYzQoZ3gxMS54LGd5MTEueCxnejExLngsZ3cxMS54KTsKICB2ZWM0IGcxMDExID0gdmVjNChneDExLnksZ3kxMS55LGd6MTEueSxndzExLnkpOwogIHZlYzQgZzAxMTEgPSB2ZWM0KGd4MTEueixneTExLnosZ3oxMS56LGd3MTEueik7CiAgdmVjNCBnMTExMSA9IHZlYzQoZ3gxMS53LGd5MTEudyxnejExLncsZ3cxMS53KTsKCiAgdmVjNCBub3JtMDAgPSB0YXlsb3JJbnZTcXJ0KHZlYzQoZG90KGcwMDAwLCBnMDAwMCksIGRvdChnMDEwMCwgZzAxMDApLCBkb3QoZzEwMDAsIGcxMDAwKSwgZG90KGcxMTAwLCBnMTEwMCkpKTsKICBnMDAwMCAqPSBub3JtMDAueDsKICBnMDEwMCAqPSBub3JtMDAueTsKICBnMTAwMCAqPSBub3JtMDAuejsKICBnMTEwMCAqPSBub3JtMDAudzsKCiAgdmVjNCBub3JtMDEgPSB0YXlsb3JJbnZTcXJ0KHZlYzQoZG90KGcwMDAxLCBnMDAwMSksIGRvdChnMDEwMSwgZzAxMDEpLCBkb3QoZzEwMDEsIGcxMDAxKSwgZG90KGcxMTAxLCBnMTEwMSkpKTsKICBnMDAwMSAqPSBub3JtMDEueDsKICBnMDEwMSAqPSBub3JtMDEueTsKICBnMTAwMSAqPSBub3JtMDEuejsKICBnMTEwMSAqPSBub3JtMDEudzsKCiAgdmVjNCBub3JtMTAgPSB0YXlsb3JJbnZTcXJ0KHZlYzQoZG90KGcwMDEwLCBnMDAxMCksIGRvdChnMDExMCwgZzAxMTApLCBkb3QoZzEwMTAsIGcxMDEwKSwgZG90KGcxMTEwLCBnMTExMCkpKTsKICBnMDAxMCAqPSBub3JtMTAueDsKICBnMDExMCAqPSBub3JtMTAueTsKICBnMTAxMCAqPSBub3JtMTAuejsKICBnMTExMCAqPSBub3JtMTAudzsKCiAgdmVjNCBub3JtMTEgPSB0YXlsb3JJbnZTcXJ0KHZlYzQoZG90KGcwMDExLCBnMDAxMSksIGRvdChnMDExMSwgZzAxMTEpLCBkb3QoZzEwMTEsIGcxMDExKSwgZG90KGcxMTExLCBnMTExMSkpKTsKICBnMDAxMSAqPSBub3JtMTEueDsKICBnMDExMSAqPSBub3JtMTEueTsKICBnMTAxMSAqPSBub3JtMTEuejsKICBnMTExMSAqPSBub3JtMTEudzsKCiAgZmxvYXQgbjAwMDAgPSBkb3QoZzAwMDAsIFBmMCk7CiAgZmxvYXQgbjEwMDAgPSBkb3QoZzEwMDAsIHZlYzQoUGYxLngsIFBmMC55encpKTsKICBmbG9hdCBuMDEwMCA9IGRvdChnMDEwMCwgdmVjNChQZjAueCwgUGYxLnksIFBmMC56dykpOwogIGZsb2F0IG4xMTAwID0gZG90KGcxMTAwLCB2ZWM0KFBmMS54eSwgUGYwLnp3KSk7CiAgZmxvYXQgbjAwMTAgPSBkb3QoZzAwMTAsIHZlYzQoUGYwLnh5LCBQZjEueiwgUGYwLncpKTsKICBmbG9hdCBuMTAxMCA9IGRvdChnMTAxMCwgdmVjNChQZjEueCwgUGYwLnksIFBmMS56LCBQZjAudykpOwogIGZsb2F0IG4wMTEwID0gZG90KGcwMTEwLCB2ZWM0KFBmMC54LCBQZjEueXosIFBmMC53KSk7CiAgZmxvYXQgbjExMTAgPSBkb3QoZzExMTAsIHZlYzQoUGYxLnh5eiwgUGYwLncpKTsKICBmbG9hdCBuMDAwMSA9IGRvdChnMDAwMSwgdmVjNChQZjAueHl6LCBQZjEudykpOwogIGZsb2F0IG4xMDAxID0gZG90KGcxMDAxLCB2ZWM0KFBmMS54LCBQZjAueXosIFBmMS53KSk7CiAgZmxvYXQgbjAxMDEgPSBkb3QoZzAxMDEsIHZlYzQoUGYwLngsIFBmMS55LCBQZjAueiwgUGYxLncpKTsKICBmbG9hdCBuMTEwMSA9IGRvdChnMTEwMSwgdmVjNChQZjEueHksIFBmMC56LCBQZjEudykpOwogIGZsb2F0IG4wMDExID0gZG90KGcwMDExLCB2ZWM0KFBmMC54eSwgUGYxLnp3KSk7CiAgZmxvYXQgbjEwMTEgPSBkb3QoZzEwMTEsIHZlYzQoUGYxLngsIFBmMC55LCBQZjEuencpKTsKICBmbG9hdCBuMDExMSA9IGRvdChnMDExMSwgdmVjNChQZjAueCwgUGYxLnl6dykpOwogIGZsb2F0IG4xMTExID0gZG90KGcxMTExLCBQZjEpOwoKICB2ZWM0IGZhZGVfeHl6dyA9IGZhZGUoUGYwKTsKICB2ZWM0IG5fMHcgPSBtaXgodmVjNChuMDAwMCwgbjEwMDAsIG4wMTAwLCBuMTEwMCksIHZlYzQobjAwMDEsIG4xMDAxLCBuMDEwMSwgbjExMDEpLCBmYWRlX3h5encudyk7CiAgdmVjNCBuXzF3ID0gbWl4KHZlYzQobjAwMTAsIG4xMDEwLCBuMDExMCwgbjExMTApLCB2ZWM0KG4wMDExLCBuMTAxMSwgbjAxMTEsIG4xMTExKSwgZmFkZV94eXp3LncpOwogIHZlYzQgbl96dyA9IG1peChuXzB3LCBuXzF3LCBmYWRlX3h5encueik7CiAgdmVjMiBuX3l6dyA9IG1peChuX3p3Lnh5LCBuX3p3Lnp3LCBmYWRlX3h5encueSk7CiAgZmxvYXQgbl94eXp3ID0gbWl4KG5feXp3LngsIG5feXp3LnksIGZhZGVfeHl6dy54KTsKICByZXR1cm4gMi4yICogbl94eXp3Owp9Cg==","base64");
+    var noise4d = Buffer("Ly8NCi8vIEdMU0wgdGV4dHVyZWxlc3MgY2xhc3NpYyA0RCBub2lzZSAiY25vaXNlIiwNCi8vIHdpdGggYW4gUlNMLXN0eWxlIHBlcmlvZGljIHZhcmlhbnQgInBub2lzZSIuDQovLyBBdXRob3I6ICBTdGVmYW4gR3VzdGF2c29uIChzdGVmYW4uZ3VzdGF2c29uQGxpdS5zZSkNCi8vIFZlcnNpb246IDIwMTEtMDgtMjINCi8vDQovLyBNYW55IHRoYW5rcyB0byBJYW4gTWNFd2FuIG9mIEFzaGltYSBBcnRzIGZvciB0aGUNCi8vIGlkZWFzIGZvciBwZXJtdXRhdGlvbiBhbmQgZ3JhZGllbnQgc2VsZWN0aW9uLg0KLy8NCi8vIENvcHlyaWdodCAoYykgMjAxMSBTdGVmYW4gR3VzdGF2c29uLiBBbGwgcmlnaHRzIHJlc2VydmVkLg0KLy8gRGlzdHJpYnV0ZWQgdW5kZXIgdGhlIE1JVCBsaWNlbnNlLiBTZWUgTElDRU5TRSBmaWxlLg0KLy8gaHR0cHM6Ly9naXRodWIuY29tL2FzaGltYS93ZWJnbC1ub2lzZQ0KLy8NCg0KdmVjNCBtb2QyODkodmVjNCB4KQ0Kew0KICByZXR1cm4geCAtIGZsb29yKHggKiAoMS4wIC8gMjg5LjApKSAqIDI4OS4wOw0KfQ0KDQp2ZWM0IHBlcm11dGUodmVjNCB4KQ0Kew0KICByZXR1cm4gbW9kMjg5KCgoeCozNC4wKSsxLjApKngpOw0KfQ0KDQp2ZWM0IHRheWxvckludlNxcnQodmVjNCByKQ0Kew0KICByZXR1cm4gMS43OTI4NDI5MTQwMDE1OSAtIDAuODUzNzM0NzIwOTUzMTQgKiByOw0KfQ0KDQp2ZWM0IGZhZGUodmVjNCB0KSB7DQogIHJldHVybiB0KnQqdCoodCoodCo2LjAtMTUuMCkrMTAuMCk7DQp9DQoNCi8vIENsYXNzaWMgUGVybGluIG5vaXNlDQpmbG9hdCBjbm9pc2UodmVjNCBQKQ0Kew0KICB2ZWM0IFBpMCA9IGZsb29yKFApOyAvLyBJbnRlZ2VyIHBhcnQgZm9yIGluZGV4aW5nDQogIHZlYzQgUGkxID0gUGkwICsgMS4wOyAvLyBJbnRlZ2VyIHBhcnQgKyAxDQogIFBpMCA9IG1vZDI4OShQaTApOw0KICBQaTEgPSBtb2QyODkoUGkxKTsNCiAgdmVjNCBQZjAgPSBmcmFjdChQKTsgLy8gRnJhY3Rpb25hbCBwYXJ0IGZvciBpbnRlcnBvbGF0aW9uDQogIHZlYzQgUGYxID0gUGYwIC0gMS4wOyAvLyBGcmFjdGlvbmFsIHBhcnQgLSAxLjANCiAgdmVjNCBpeCA9IHZlYzQoUGkwLngsIFBpMS54LCBQaTAueCwgUGkxLngpOw0KICB2ZWM0IGl5ID0gdmVjNChQaTAueXksIFBpMS55eSk7DQogIHZlYzQgaXowID0gdmVjNChQaTAuenp6eik7DQogIHZlYzQgaXoxID0gdmVjNChQaTEuenp6eik7DQogIHZlYzQgaXcwID0gdmVjNChQaTAud3d3dyk7DQogIHZlYzQgaXcxID0gdmVjNChQaTEud3d3dyk7DQoNCiAgdmVjNCBpeHkgPSBwZXJtdXRlKHBlcm11dGUoaXgpICsgaXkpOw0KICB2ZWM0IGl4eTAgPSBwZXJtdXRlKGl4eSArIGl6MCk7DQogIHZlYzQgaXh5MSA9IHBlcm11dGUoaXh5ICsgaXoxKTsNCiAgdmVjNCBpeHkwMCA9IHBlcm11dGUoaXh5MCArIGl3MCk7DQogIHZlYzQgaXh5MDEgPSBwZXJtdXRlKGl4eTAgKyBpdzEpOw0KICB2ZWM0IGl4eTEwID0gcGVybXV0ZShpeHkxICsgaXcwKTsNCiAgdmVjNCBpeHkxMSA9IHBlcm11dGUoaXh5MSArIGl3MSk7DQoNCiAgdmVjNCBneDAwID0gaXh5MDAgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBneTAwID0gZmxvb3IoZ3gwMCkgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBnejAwID0gZmxvb3IoZ3kwMCkgKiAoMS4wIC8gNi4wKTsNCiAgZ3gwMCA9IGZyYWN0KGd4MDApIC0gMC41Ow0KICBneTAwID0gZnJhY3QoZ3kwMCkgLSAwLjU7DQogIGd6MDAgPSBmcmFjdChnejAwKSAtIDAuNTsNCiAgdmVjNCBndzAwID0gdmVjNCgwLjc1KSAtIGFicyhneDAwKSAtIGFicyhneTAwKSAtIGFicyhnejAwKTsNCiAgdmVjNCBzdzAwID0gc3RlcChndzAwLCB2ZWM0KDAuMCkpOw0KICBneDAwIC09IHN3MDAgKiAoc3RlcCgwLjAsIGd4MDApIC0gMC41KTsNCiAgZ3kwMCAtPSBzdzAwICogKHN0ZXAoMC4wLCBneTAwKSAtIDAuNSk7DQoNCiAgdmVjNCBneDAxID0gaXh5MDEgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBneTAxID0gZmxvb3IoZ3gwMSkgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBnejAxID0gZmxvb3IoZ3kwMSkgKiAoMS4wIC8gNi4wKTsNCiAgZ3gwMSA9IGZyYWN0KGd4MDEpIC0gMC41Ow0KICBneTAxID0gZnJhY3QoZ3kwMSkgLSAwLjU7DQogIGd6MDEgPSBmcmFjdChnejAxKSAtIDAuNTsNCiAgdmVjNCBndzAxID0gdmVjNCgwLjc1KSAtIGFicyhneDAxKSAtIGFicyhneTAxKSAtIGFicyhnejAxKTsNCiAgdmVjNCBzdzAxID0gc3RlcChndzAxLCB2ZWM0KDAuMCkpOw0KICBneDAxIC09IHN3MDEgKiAoc3RlcCgwLjAsIGd4MDEpIC0gMC41KTsNCiAgZ3kwMSAtPSBzdzAxICogKHN0ZXAoMC4wLCBneTAxKSAtIDAuNSk7DQoNCiAgdmVjNCBneDEwID0gaXh5MTAgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBneTEwID0gZmxvb3IoZ3gxMCkgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBnejEwID0gZmxvb3IoZ3kxMCkgKiAoMS4wIC8gNi4wKTsNCiAgZ3gxMCA9IGZyYWN0KGd4MTApIC0gMC41Ow0KICBneTEwID0gZnJhY3QoZ3kxMCkgLSAwLjU7DQogIGd6MTAgPSBmcmFjdChnejEwKSAtIDAuNTsNCiAgdmVjNCBndzEwID0gdmVjNCgwLjc1KSAtIGFicyhneDEwKSAtIGFicyhneTEwKSAtIGFicyhnejEwKTsNCiAgdmVjNCBzdzEwID0gc3RlcChndzEwLCB2ZWM0KDAuMCkpOw0KICBneDEwIC09IHN3MTAgKiAoc3RlcCgwLjAsIGd4MTApIC0gMC41KTsNCiAgZ3kxMCAtPSBzdzEwICogKHN0ZXAoMC4wLCBneTEwKSAtIDAuNSk7DQoNCiAgdmVjNCBneDExID0gaXh5MTEgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBneTExID0gZmxvb3IoZ3gxMSkgKiAoMS4wIC8gNy4wKTsNCiAgdmVjNCBnejExID0gZmxvb3IoZ3kxMSkgKiAoMS4wIC8gNi4wKTsNCiAgZ3gxMSA9IGZyYWN0KGd4MTEpIC0gMC41Ow0KICBneTExID0gZnJhY3QoZ3kxMSkgLSAwLjU7DQogIGd6MTEgPSBmcmFjdChnejExKSAtIDAuNTsNCiAgdmVjNCBndzExID0gdmVjNCgwLjc1KSAtIGFicyhneDExKSAtIGFicyhneTExKSAtIGFicyhnejExKTsNCiAgdmVjNCBzdzExID0gc3RlcChndzExLCB2ZWM0KDAuMCkpOw0KICBneDExIC09IHN3MTEgKiAoc3RlcCgwLjAsIGd4MTEpIC0gMC41KTsNCiAgZ3kxMSAtPSBzdzExICogKHN0ZXAoMC4wLCBneTExKSAtIDAuNSk7DQoNCiAgdmVjNCBnMDAwMCA9IHZlYzQoZ3gwMC54LGd5MDAueCxnejAwLngsZ3cwMC54KTsNCiAgdmVjNCBnMTAwMCA9IHZlYzQoZ3gwMC55LGd5MDAueSxnejAwLnksZ3cwMC55KTsNCiAgdmVjNCBnMDEwMCA9IHZlYzQoZ3gwMC56LGd5MDAueixnejAwLnosZ3cwMC56KTsNCiAgdmVjNCBnMTEwMCA9IHZlYzQoZ3gwMC53LGd5MDAudyxnejAwLncsZ3cwMC53KTsNCiAgdmVjNCBnMDAxMCA9IHZlYzQoZ3gxMC54LGd5MTAueCxnejEwLngsZ3cxMC54KTsNCiAgdmVjNCBnMTAxMCA9IHZlYzQoZ3gxMC55LGd5MTAueSxnejEwLnksZ3cxMC55KTsNCiAgdmVjNCBnMDExMCA9IHZlYzQoZ3gxMC56LGd5MTAueixnejEwLnosZ3cxMC56KTsNCiAgdmVjNCBnMTExMCA9IHZlYzQoZ3gxMC53LGd5MTAudyxnejEwLncsZ3cxMC53KTsNCiAgdmVjNCBnMDAwMSA9IHZlYzQoZ3gwMS54LGd5MDEueCxnejAxLngsZ3cwMS54KTsNCiAgdmVjNCBnMTAwMSA9IHZlYzQoZ3gwMS55LGd5MDEueSxnejAxLnksZ3cwMS55KTsNCiAgdmVjNCBnMDEwMSA9IHZlYzQoZ3gwMS56LGd5MDEueixnejAxLnosZ3cwMS56KTsNCiAgdmVjNCBnMTEwMSA9IHZlYzQoZ3gwMS53LGd5MDEudyxnejAxLncsZ3cwMS53KTsNCiAgdmVjNCBnMDAxMSA9IHZlYzQoZ3gxMS54LGd5MTEueCxnejExLngsZ3cxMS54KTsNCiAgdmVjNCBnMTAxMSA9IHZlYzQoZ3gxMS55LGd5MTEueSxnejExLnksZ3cxMS55KTsNCiAgdmVjNCBnMDExMSA9IHZlYzQoZ3gxMS56LGd5MTEueixnejExLnosZ3cxMS56KTsNCiAgdmVjNCBnMTExMSA9IHZlYzQoZ3gxMS53LGd5MTEudyxnejExLncsZ3cxMS53KTsNCg0KICB2ZWM0IG5vcm0wMCA9IHRheWxvckludlNxcnQodmVjNChkb3QoZzAwMDAsIGcwMDAwKSwgZG90KGcwMTAwLCBnMDEwMCksIGRvdChnMTAwMCwgZzEwMDApLCBkb3QoZzExMDAsIGcxMTAwKSkpOw0KICBnMDAwMCAqPSBub3JtMDAueDsNCiAgZzAxMDAgKj0gbm9ybTAwLnk7DQogIGcxMDAwICo9IG5vcm0wMC56Ow0KICBnMTEwMCAqPSBub3JtMDAudzsNCg0KICB2ZWM0IG5vcm0wMSA9IHRheWxvckludlNxcnQodmVjNChkb3QoZzAwMDEsIGcwMDAxKSwgZG90KGcwMTAxLCBnMDEwMSksIGRvdChnMTAwMSwgZzEwMDEpLCBkb3QoZzExMDEsIGcxMTAxKSkpOw0KICBnMDAwMSAqPSBub3JtMDEueDsNCiAgZzAxMDEgKj0gbm9ybTAxLnk7DQogIGcxMDAxICo9IG5vcm0wMS56Ow0KICBnMTEwMSAqPSBub3JtMDEudzsNCg0KICB2ZWM0IG5vcm0xMCA9IHRheWxvckludlNxcnQodmVjNChkb3QoZzAwMTAsIGcwMDEwKSwgZG90KGcwMTEwLCBnMDExMCksIGRvdChnMTAxMCwgZzEwMTApLCBkb3QoZzExMTAsIGcxMTEwKSkpOw0KICBnMDAxMCAqPSBub3JtMTAueDsNCiAgZzAxMTAgKj0gbm9ybTEwLnk7DQogIGcxMDEwICo9IG5vcm0xMC56Ow0KICBnMTExMCAqPSBub3JtMTAudzsNCg0KICB2ZWM0IG5vcm0xMSA9IHRheWxvckludlNxcnQodmVjNChkb3QoZzAwMTEsIGcwMDExKSwgZG90KGcwMTExLCBnMDExMSksIGRvdChnMTAxMSwgZzEwMTEpLCBkb3QoZzExMTEsIGcxMTExKSkpOw0KICBnMDAxMSAqPSBub3JtMTEueDsNCiAgZzAxMTEgKj0gbm9ybTExLnk7DQogIGcxMDExICo9IG5vcm0xMS56Ow0KICBnMTExMSAqPSBub3JtMTEudzsNCg0KICBmbG9hdCBuMDAwMCA9IGRvdChnMDAwMCwgUGYwKTsNCiAgZmxvYXQgbjEwMDAgPSBkb3QoZzEwMDAsIHZlYzQoUGYxLngsIFBmMC55encpKTsNCiAgZmxvYXQgbjAxMDAgPSBkb3QoZzAxMDAsIHZlYzQoUGYwLngsIFBmMS55LCBQZjAuencpKTsNCiAgZmxvYXQgbjExMDAgPSBkb3QoZzExMDAsIHZlYzQoUGYxLnh5LCBQZjAuencpKTsNCiAgZmxvYXQgbjAwMTAgPSBkb3QoZzAwMTAsIHZlYzQoUGYwLnh5LCBQZjEueiwgUGYwLncpKTsNCiAgZmxvYXQgbjEwMTAgPSBkb3QoZzEwMTAsIHZlYzQoUGYxLngsIFBmMC55LCBQZjEueiwgUGYwLncpKTsNCiAgZmxvYXQgbjAxMTAgPSBkb3QoZzAxMTAsIHZlYzQoUGYwLngsIFBmMS55eiwgUGYwLncpKTsNCiAgZmxvYXQgbjExMTAgPSBkb3QoZzExMTAsIHZlYzQoUGYxLnh5eiwgUGYwLncpKTsNCiAgZmxvYXQgbjAwMDEgPSBkb3QoZzAwMDEsIHZlYzQoUGYwLnh5eiwgUGYxLncpKTsNCiAgZmxvYXQgbjEwMDEgPSBkb3QoZzEwMDEsIHZlYzQoUGYxLngsIFBmMC55eiwgUGYxLncpKTsNCiAgZmxvYXQgbjAxMDEgPSBkb3QoZzAxMDEsIHZlYzQoUGYwLngsIFBmMS55LCBQZjAueiwgUGYxLncpKTsNCiAgZmxvYXQgbjExMDEgPSBkb3QoZzExMDEsIHZlYzQoUGYxLnh5LCBQZjAueiwgUGYxLncpKTsNCiAgZmxvYXQgbjAwMTEgPSBkb3QoZzAwMTEsIHZlYzQoUGYwLnh5LCBQZjEuencpKTsNCiAgZmxvYXQgbjEwMTEgPSBkb3QoZzEwMTEsIHZlYzQoUGYxLngsIFBmMC55LCBQZjEuencpKTsNCiAgZmxvYXQgbjAxMTEgPSBkb3QoZzAxMTEsIHZlYzQoUGYwLngsIFBmMS55encpKTsNCiAgZmxvYXQgbjExMTEgPSBkb3QoZzExMTEsIFBmMSk7DQoNCiAgdmVjNCBmYWRlX3h5encgPSBmYWRlKFBmMCk7DQogIHZlYzQgbl8wdyA9IG1peCh2ZWM0KG4wMDAwLCBuMTAwMCwgbjAxMDAsIG4xMTAwKSwgdmVjNChuMDAwMSwgbjEwMDEsIG4wMTAxLCBuMTEwMSksIGZhZGVfeHl6dy53KTsNCiAgdmVjNCBuXzF3ID0gbWl4KHZlYzQobjAwMTAsIG4xMDEwLCBuMDExMCwgbjExMTApLCB2ZWM0KG4wMDExLCBuMTAxMSwgbjAxMTEsIG4xMTExKSwgZmFkZV94eXp3LncpOw0KICB2ZWM0IG5fencgPSBtaXgobl8wdywgbl8xdywgZmFkZV94eXp3LnopOw0KICB2ZWMyIG5feXp3ID0gbWl4KG5fencueHksIG5fencuencsIGZhZGVfeHl6dy55KTsNCiAgZmxvYXQgbl94eXp3ID0gbWl4KG5feXp3LngsIG5feXp3LnksIGZhZGVfeHl6dy54KTsNCiAgcmV0dXJuIDIuMiAqIG5feHl6dzsNCn0NCg0KLy8gQ2xhc3NpYyBQZXJsaW4gbm9pc2UsIHBlcmlvZGljIHZlcnNpb24NCmZsb2F0IHBub2lzZSh2ZWM0IFAsIHZlYzQgcmVwKQ0Kew0KICB2ZWM0IFBpMCA9IG1vZChmbG9vcihQKSwgcmVwKTsgLy8gSW50ZWdlciBwYXJ0IG1vZHVsbyByZXANCiAgdmVjNCBQaTEgPSBtb2QoUGkwICsgMS4wLCByZXApOyAvLyBJbnRlZ2VyIHBhcnQgKyAxIG1vZCByZXANCiAgUGkwID0gbW9kMjg5KFBpMCk7DQogIFBpMSA9IG1vZDI4OShQaTEpOw0KICB2ZWM0IFBmMCA9IGZyYWN0KFApOyAvLyBGcmFjdGlvbmFsIHBhcnQgZm9yIGludGVycG9sYXRpb24NCiAgdmVjNCBQZjEgPSBQZjAgLSAxLjA7IC8vIEZyYWN0aW9uYWwgcGFydCAtIDEuMA0KICB2ZWM0IGl4ID0gdmVjNChQaTAueCwgUGkxLngsIFBpMC54LCBQaTEueCk7DQogIHZlYzQgaXkgPSB2ZWM0KFBpMC55eSwgUGkxLnl5KTsNCiAgdmVjNCBpejAgPSB2ZWM0KFBpMC56enp6KTsNCiAgdmVjNCBpejEgPSB2ZWM0KFBpMS56enp6KTsNCiAgdmVjNCBpdzAgPSB2ZWM0KFBpMC53d3d3KTsNCiAgdmVjNCBpdzEgPSB2ZWM0KFBpMS53d3d3KTsNCg0KICB2ZWM0IGl4eSA9IHBlcm11dGUocGVybXV0ZShpeCkgKyBpeSk7DQogIHZlYzQgaXh5MCA9IHBlcm11dGUoaXh5ICsgaXowKTsNCiAgdmVjNCBpeHkxID0gcGVybXV0ZShpeHkgKyBpejEpOw0KICB2ZWM0IGl4eTAwID0gcGVybXV0ZShpeHkwICsgaXcwKTsNCiAgdmVjNCBpeHkwMSA9IHBlcm11dGUoaXh5MCArIGl3MSk7DQogIHZlYzQgaXh5MTAgPSBwZXJtdXRlKGl4eTEgKyBpdzApOw0KICB2ZWM0IGl4eTExID0gcGVybXV0ZShpeHkxICsgaXcxKTsNCg0KICB2ZWM0IGd4MDAgPSBpeHkwMCAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd5MDAgPSBmbG9vcihneDAwKSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd6MDAgPSBmbG9vcihneTAwKSAqICgxLjAgLyA2LjApOw0KICBneDAwID0gZnJhY3QoZ3gwMCkgLSAwLjU7DQogIGd5MDAgPSBmcmFjdChneTAwKSAtIDAuNTsNCiAgZ3owMCA9IGZyYWN0KGd6MDApIC0gMC41Ow0KICB2ZWM0IGd3MDAgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MDApIC0gYWJzKGd5MDApIC0gYWJzKGd6MDApOw0KICB2ZWM0IHN3MDAgPSBzdGVwKGd3MDAsIHZlYzQoMC4wKSk7DQogIGd4MDAgLT0gc3cwMCAqIChzdGVwKDAuMCwgZ3gwMCkgLSAwLjUpOw0KICBneTAwIC09IHN3MDAgKiAoc3RlcCgwLjAsIGd5MDApIC0gMC41KTsNCg0KICB2ZWM0IGd4MDEgPSBpeHkwMSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd5MDEgPSBmbG9vcihneDAxKSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd6MDEgPSBmbG9vcihneTAxKSAqICgxLjAgLyA2LjApOw0KICBneDAxID0gZnJhY3QoZ3gwMSkgLSAwLjU7DQogIGd5MDEgPSBmcmFjdChneTAxKSAtIDAuNTsNCiAgZ3owMSA9IGZyYWN0KGd6MDEpIC0gMC41Ow0KICB2ZWM0IGd3MDEgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MDEpIC0gYWJzKGd5MDEpIC0gYWJzKGd6MDEpOw0KICB2ZWM0IHN3MDEgPSBzdGVwKGd3MDEsIHZlYzQoMC4wKSk7DQogIGd4MDEgLT0gc3cwMSAqIChzdGVwKDAuMCwgZ3gwMSkgLSAwLjUpOw0KICBneTAxIC09IHN3MDEgKiAoc3RlcCgwLjAsIGd5MDEpIC0gMC41KTsNCg0KICB2ZWM0IGd4MTAgPSBpeHkxMCAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd5MTAgPSBmbG9vcihneDEwKSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd6MTAgPSBmbG9vcihneTEwKSAqICgxLjAgLyA2LjApOw0KICBneDEwID0gZnJhY3QoZ3gxMCkgLSAwLjU7DQogIGd5MTAgPSBmcmFjdChneTEwKSAtIDAuNTsNCiAgZ3oxMCA9IGZyYWN0KGd6MTApIC0gMC41Ow0KICB2ZWM0IGd3MTAgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MTApIC0gYWJzKGd5MTApIC0gYWJzKGd6MTApOw0KICB2ZWM0IHN3MTAgPSBzdGVwKGd3MTAsIHZlYzQoMC4wKSk7DQogIGd4MTAgLT0gc3cxMCAqIChzdGVwKDAuMCwgZ3gxMCkgLSAwLjUpOw0KICBneTEwIC09IHN3MTAgKiAoc3RlcCgwLjAsIGd5MTApIC0gMC41KTsNCg0KICB2ZWM0IGd4MTEgPSBpeHkxMSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd5MTEgPSBmbG9vcihneDExKSAqICgxLjAgLyA3LjApOw0KICB2ZWM0IGd6MTEgPSBmbG9vcihneTExKSAqICgxLjAgLyA2LjApOw0KICBneDExID0gZnJhY3QoZ3gxMSkgLSAwLjU7DQogIGd5MTEgPSBmcmFjdChneTExKSAtIDAuNTsNCiAgZ3oxMSA9IGZyYWN0KGd6MTEpIC0gMC41Ow0KICB2ZWM0IGd3MTEgPSB2ZWM0KDAuNzUpIC0gYWJzKGd4MTEpIC0gYWJzKGd5MTEpIC0gYWJzKGd6MTEpOw0KICB2ZWM0IHN3MTEgPSBzdGVwKGd3MTEsIHZlYzQoMC4wKSk7DQogIGd4MTEgLT0gc3cxMSAqIChzdGVwKDAuMCwgZ3gxMSkgLSAwLjUpOw0KICBneTExIC09IHN3MTEgKiAoc3RlcCgwLjAsIGd5MTEpIC0gMC41KTsNCg0KICB2ZWM0IGcwMDAwID0gdmVjNChneDAwLngsZ3kwMC54LGd6MDAueCxndzAwLngpOw0KICB2ZWM0IGcxMDAwID0gdmVjNChneDAwLnksZ3kwMC55LGd6MDAueSxndzAwLnkpOw0KICB2ZWM0IGcwMTAwID0gdmVjNChneDAwLnosZ3kwMC56LGd6MDAueixndzAwLnopOw0KICB2ZWM0IGcxMTAwID0gdmVjNChneDAwLncsZ3kwMC53LGd6MDAudyxndzAwLncpOw0KICB2ZWM0IGcwMDEwID0gdmVjNChneDEwLngsZ3kxMC54LGd6MTAueCxndzEwLngpOw0KICB2ZWM0IGcxMDEwID0gdmVjNChneDEwLnksZ3kxMC55LGd6MTAueSxndzEwLnkpOw0KICB2ZWM0IGcwMTEwID0gdmVjNChneDEwLnosZ3kxMC56LGd6MTAueixndzEwLnopOw0KICB2ZWM0IGcxMTEwID0gdmVjNChneDEwLncsZ3kxMC53LGd6MTAudyxndzEwLncpOw0KICB2ZWM0IGcwMDAxID0gdmVjNChneDAxLngsZ3kwMS54LGd6MDEueCxndzAxLngpOw0KICB2ZWM0IGcxMDAxID0gdmVjNChneDAxLnksZ3kwMS55LGd6MDEueSxndzAxLnkpOw0KICB2ZWM0IGcwMTAxID0gdmVjNChneDAxLnosZ3kwMS56LGd6MDEueixndzAxLnopOw0KICB2ZWM0IGcxMTAxID0gdmVjNChneDAxLncsZ3kwMS53LGd6MDEudyxndzAxLncpOw0KICB2ZWM0IGcwMDExID0gdmVjNChneDExLngsZ3kxMS54LGd6MTEueCxndzExLngpOw0KICB2ZWM0IGcxMDExID0gdmVjNChneDExLnksZ3kxMS55LGd6MTEueSxndzExLnkpOw0KICB2ZWM0IGcwMTExID0gdmVjNChneDExLnosZ3kxMS56LGd6MTEueixndzExLnopOw0KICB2ZWM0IGcxMTExID0gdmVjNChneDExLncsZ3kxMS53LGd6MTEudyxndzExLncpOw0KDQogIHZlYzQgbm9ybTAwID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAwMCwgZzAwMDApLCBkb3QoZzAxMDAsIGcwMTAwKSwgZG90KGcxMDAwLCBnMTAwMCksIGRvdChnMTEwMCwgZzExMDApKSk7DQogIGcwMDAwICo9IG5vcm0wMC54Ow0KICBnMDEwMCAqPSBub3JtMDAueTsNCiAgZzEwMDAgKj0gbm9ybTAwLno7DQogIGcxMTAwICo9IG5vcm0wMC53Ow0KDQogIHZlYzQgbm9ybTAxID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAwMSwgZzAwMDEpLCBkb3QoZzAxMDEsIGcwMTAxKSwgZG90KGcxMDAxLCBnMTAwMSksIGRvdChnMTEwMSwgZzExMDEpKSk7DQogIGcwMDAxICo9IG5vcm0wMS54Ow0KICBnMDEwMSAqPSBub3JtMDEueTsNCiAgZzEwMDEgKj0gbm9ybTAxLno7DQogIGcxMTAxICo9IG5vcm0wMS53Ow0KDQogIHZlYzQgbm9ybTEwID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAxMCwgZzAwMTApLCBkb3QoZzAxMTAsIGcwMTEwKSwgZG90KGcxMDEwLCBnMTAxMCksIGRvdChnMTExMCwgZzExMTApKSk7DQogIGcwMDEwICo9IG5vcm0xMC54Ow0KICBnMDExMCAqPSBub3JtMTAueTsNCiAgZzEwMTAgKj0gbm9ybTEwLno7DQogIGcxMTEwICo9IG5vcm0xMC53Ow0KDQogIHZlYzQgbm9ybTExID0gdGF5bG9ySW52U3FydCh2ZWM0KGRvdChnMDAxMSwgZzAwMTEpLCBkb3QoZzAxMTEsIGcwMTExKSwgZG90KGcxMDExLCBnMTAxMSksIGRvdChnMTExMSwgZzExMTEpKSk7DQogIGcwMDExICo9IG5vcm0xMS54Ow0KICBnMDExMSAqPSBub3JtMTEueTsNCiAgZzEwMTEgKj0gbm9ybTExLno7DQogIGcxMTExICo9IG5vcm0xMS53Ow0KDQogIGZsb2F0IG4wMDAwID0gZG90KGcwMDAwLCBQZjApOw0KICBmbG9hdCBuMTAwMCA9IGRvdChnMTAwMCwgdmVjNChQZjEueCwgUGYwLnl6dykpOw0KICBmbG9hdCBuMDEwMCA9IGRvdChnMDEwMCwgdmVjNChQZjAueCwgUGYxLnksIFBmMC56dykpOw0KICBmbG9hdCBuMTEwMCA9IGRvdChnMTEwMCwgdmVjNChQZjEueHksIFBmMC56dykpOw0KICBmbG9hdCBuMDAxMCA9IGRvdChnMDAxMCwgdmVjNChQZjAueHksIFBmMS56LCBQZjAudykpOw0KICBmbG9hdCBuMTAxMCA9IGRvdChnMTAxMCwgdmVjNChQZjEueCwgUGYwLnksIFBmMS56LCBQZjAudykpOw0KICBmbG9hdCBuMDExMCA9IGRvdChnMDExMCwgdmVjNChQZjAueCwgUGYxLnl6LCBQZjAudykpOw0KICBmbG9hdCBuMTExMCA9IGRvdChnMTExMCwgdmVjNChQZjEueHl6LCBQZjAudykpOw0KICBmbG9hdCBuMDAwMSA9IGRvdChnMDAwMSwgdmVjNChQZjAueHl6LCBQZjEudykpOw0KICBmbG9hdCBuMTAwMSA9IGRvdChnMTAwMSwgdmVjNChQZjEueCwgUGYwLnl6LCBQZjEudykpOw0KICBmbG9hdCBuMDEwMSA9IGRvdChnMDEwMSwgdmVjNChQZjAueCwgUGYxLnksIFBmMC56LCBQZjEudykpOw0KICBmbG9hdCBuMTEwMSA9IGRvdChnMTEwMSwgdmVjNChQZjEueHksIFBmMC56LCBQZjEudykpOw0KICBmbG9hdCBuMDAxMSA9IGRvdChnMDAxMSwgdmVjNChQZjAueHksIFBmMS56dykpOw0KICBmbG9hdCBuMTAxMSA9IGRvdChnMTAxMSwgdmVjNChQZjEueCwgUGYwLnksIFBmMS56dykpOw0KICBmbG9hdCBuMDExMSA9IGRvdChnMDExMSwgdmVjNChQZjAueCwgUGYxLnl6dykpOw0KICBmbG9hdCBuMTExMSA9IGRvdChnMTExMSwgUGYxKTsNCg0KICB2ZWM0IGZhZGVfeHl6dyA9IGZhZGUoUGYwKTsNCiAgdmVjNCBuXzB3ID0gbWl4KHZlYzQobjAwMDAsIG4xMDAwLCBuMDEwMCwgbjExMDApLCB2ZWM0KG4wMDAxLCBuMTAwMSwgbjAxMDEsIG4xMTAxKSwgZmFkZV94eXp3LncpOw0KICB2ZWM0IG5fMXcgPSBtaXgodmVjNChuMDAxMCwgbjEwMTAsIG4wMTEwLCBuMTExMCksIHZlYzQobjAwMTEsIG4xMDExLCBuMDExMSwgbjExMTEpLCBmYWRlX3h5encudyk7DQogIHZlYzQgbl96dyA9IG1peChuXzB3LCBuXzF3LCBmYWRlX3h5encueik7DQogIHZlYzIgbl95encgPSBtaXgobl96dy54eSwgbl96dy56dywgZmFkZV94eXp3LnkpOw0KICBmbG9hdCBuX3h5encgPSBtaXgobl95encueCwgbl95encueSwgZmFkZV94eXp3LngpOw0KICByZXR1cm4gMi4yICogbl94eXp3Ow0KfQ0K","base64");
     source = source.replace("__noise4d__", noise4d);
     source = source.split("__split__");
     var program = new webgl.Program(gl, source[0], source[1]);
@@ -18769,7 +19027,7 @@ module.exports.loadProgram = function(gl, source) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./webgl.js":97,"buffer":4}],97:[function(require,module,exports){
+},{"./webgl.js":98,"buffer":4}],98:[function(require,module,exports){
 
 /*...........................................................................*/
 function buildAttribs(gl, layout) {
@@ -18925,22 +19183,25 @@ function Renderable(gl, program, buffers, primitiveCount) {
 
     self.render = function() {
         program.use();
-        for (name in buffers) {
+        for (var name in buffers) {
+            // 被着色器编译器优化掉的 attribute（未参与计算）不会出现在
+            // program.attribs 里，跳过即可，不能让整个绘制抛异常。
+            if (!program.attribs[name]) {
+                continue;
+            }
             var buffer = buffers[name].buffer;
             var size = buffers[name].size;
-            try {
-                var location = program.attribs[name].location;
-            } catch (e) {
-                console.log("Could not find location for", name);
-                throw e;
-            }
+            var location = program.attribs[name].location;
             buffer.bind();
             gl.enableVertexAttribArray(location);
             gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
         }
         gl.drawArrays(gl.TRIANGLES, 0, 3 * primitiveCount);
-        for (name in self.buffers) {
-            gl.disableVertexAttribArray(program.attributes[name].location);
+        for (var name2 in buffers) {
+            if (!program.attribs[name2]) {
+                continue;
+            }
+            gl.disableVertexAttribArray(program.attribs[name2].location);
         }
     }
 
@@ -18960,7 +19221,7 @@ function InstancedRenderable(gl, program, buffers, primitiveCount, instancedExt)
 
     self.render = function() {
         program.use();
-        for (name in buffers) {
+        for (var name in buffers) {
             var buffer = buffers[name].buffer;
             var size = buffers[name].size;
             try {
@@ -18975,8 +19236,8 @@ function InstancedRenderable(gl, program, buffers, primitiveCount, instancedExt)
             instancedExt.vertexAttribDivisorANGLE(location, buffers[name].divisor);
         }
         instancedExt.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6*2*3, primitiveCount)
-        for (name in self.buffers) {
-            gl.disableVertexAttribArray(program.attributes[name].location);
+        for (var name2 in buffers) {
+            gl.disableVertexAttribArray(program.attribs[name2].location);
         }
     }
 

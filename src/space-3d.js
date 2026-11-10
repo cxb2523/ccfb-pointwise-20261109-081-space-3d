@@ -10,8 +10,6 @@ var webgl = require("./webgl.js");
 var util = require("./util.js");
 var rng = require("rng");
 
-var NSTARS = 100000;
-
 module.exports = function() {
   var self = this;
 
@@ -34,10 +32,6 @@ module.exports = function() {
       self.gl,
       fs.readFileSync(__dirname + "/glsl/nebula.glsl", "utf8")
     );
-    self.pPointStars = util.loadProgram(
-      self.gl,
-      fs.readFileSync(__dirname + "/glsl/point-stars.glsl", "utf8")
-    );
     self.pStar = util.loadProgram(
       self.gl,
       fs.readFileSync(__dirname + "/glsl/star.glsl", "utf8")
@@ -47,27 +41,8 @@ module.exports = function() {
       fs.readFileSync(__dirname + "/glsl/sun.glsl", "utf8")
     );
 
-    // Create the point stars renderable.
-    var rand = new rng.MT(hashcode("best seed ever") + 5000);
-    var position = new Float32Array(18 * NSTARS);
-    var color = new Float32Array(18 * NSTARS);
-    for (var i = 0; i < NSTARS; i++) {
-      var size = 0.05;
-      var pos = glm.vec3.random(glm.vec3.create(), 1.0);
-      var star = buildStar(size, pos, 128.0, rand);
-      position.set(star.position, i * 18);
-      color.set(star.color, i * 18);
-    }
-    var attribs = webgl.buildAttribs(self.gl, { aPosition: 3, aColor: 3 });
-    attribs.aPosition.buffer.set(position);
-    attribs.aColor.buffer.set(color);
-    var count = position.length / 9;
-    self.rPointStars = new webgl.Renderable(
-      self.gl,
-      self.pPointStars,
-      attribs,
-      count
-    );
+    // 三层视差点星已移至 src/starfield.js，在主画布上以单 draw call、
+    // additive + depthMask(false) 方式绘制，不再烘焙进离屏 skybox。
 
     // Create the nebula, sun, and star renderables.
     self.rNebula = buildBox(self.gl, self.pNebula);
@@ -84,16 +59,8 @@ module.exports = function() {
     self.gl.viewport(0, 0, params.resolution, params.resolution);
 
     // Initialize the point star parameters.
-    var rand = new rng.MT(hashcode(params.seed) + 1000);
-    var pStarParams = [];
-    while (params.pointStars) {
-      pStarParams.push({
-        rotation: randomRotation(rand)
-      });
-      if (rand.random() < 0.2) {
-        break;
-      }
-    }
+    // 点星改由主画布上的 src/starfield.js 单 draw call 三层视差渲染，
+    // 这里不再生成离屏点星参数（pointStars 开关保留，仅用于 GUI 兼容）。
 
     // Initialize the star parameters.
     var rand = new rng.MT(hashcode(params.seed) + 3000);
@@ -187,29 +154,12 @@ module.exports = function() {
       var dir = dirs[keys[i]];
       glm.mat4.lookAt(view, [0, 0, 0], dir.target, dir.up);
 
-      // Render the point stars.
-      self.pPointStars.use();
-      model = glm.mat4.create();
-      self.pPointStars.setUniform("uView", "Matrix4fv", false, view);
-      self.pPointStars.setUniform(
-        "uProjection",
-        "Matrix4fv",
-        false,
-        projection
-      );
-      for (var j = 0; j < pStarParams.length; j++) {
-        var ps = pStarParams[j];
-        glm.mat4.mul(model, ps.rotation, model);
-        self.pPointStars.setUniform("uModel", "Matrix4fv", false, model);
-        self.rPointStars.render();
-      }
-
       // Render the stars.
       self.pStar.use();
       self.pStar.setUniform("uView", "Matrix4fv", false, view);
       self.pStar.setUniform("uProjection", "Matrix4fv", false, projection);
       self.pStar.setUniform("uModel", "Matrix4fv", false, model);
-      for (j = 0; j < starParams.length; j++) {
+      for (var j = 0; j < starParams.length; j++) {
         var s = starParams[j];
         self.pStar.setUniform("uPosition", "3fv", s.pos);
         self.pStar.setUniform("uColor", "3fv", s.color);
@@ -221,7 +171,7 @@ module.exports = function() {
       // Render the nebulae.
       self.pNebula.use();
       model = glm.mat4.create();
-      for (j = 0; j < nebulaParams.length; j++) {
+      for (var j = 0; j < nebulaParams.length; j++) {
         var p = nebulaParams[j];
         self.pNebula.setUniform("uModel", "Matrix4fv", false, model);
         self.pNebula.setUniform("uView", "Matrix4fv", false, view);
@@ -239,7 +189,7 @@ module.exports = function() {
       self.pSun.setUniform("uView", "Matrix4fv", false, view);
       self.pSun.setUniform("uProjection", "Matrix4fv", false, projection);
       self.pSun.setUniform("uModel", "Matrix4fv", false, model);
-      for (j = 0; j < sunParams.length; j++) {
+      for (var j = 0; j < sunParams.length; j++) {
         var sun = sunParams[j];
         self.pSun.setUniform("uPosition", "3fv", sun.pos);
         self.pSun.setUniform("uColor", "3fv", sun.color);
@@ -261,36 +211,6 @@ module.exports = function() {
 
   self.initialize();
 };
-
-function buildStar(size, pos, dist, rand) {
-  var c = Math.pow(rand.random(), 4.0);
-  var color = [c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c, c];
-
-  var vertices = [
-    [-size, -size, 0],
-    [size, -size, 0],
-    [size, size, 0],
-    [-size, -size, 0],
-    [size, size, 0],
-    [-size, size, 0]
-  ];
-
-  var position = [];
-
-  for (var ii = 0; ii < 6; ii++) {
-    var rot = quatRotFromForward(pos);
-    glm.vec3.transformQuat(vertices[ii], vertices[ii], rot);
-    vertices[ii][0] += pos[0] * dist;
-    vertices[ii][1] += pos[1] * dist;
-    vertices[ii][2] += pos[2] * dist;
-    position.push.apply(position, vertices[ii]);
-  }
-
-  return {
-    position: position,
-    color: color
-  };
-}
 
 function buildBox(gl, program) {
   var position = [
@@ -413,20 +333,6 @@ function buildBox(gl, program) {
   var count = position.length / 9;
   var renderable = new webgl.Renderable(gl, program, attribs, count);
   return renderable;
-}
-
-function quatRotBetweenVecs(a, b) {
-  var theta = Math.acos(glm.vec3.dot(a, b));
-  var omega = glm.vec3.create();
-  glm.vec3.cross(omega, a, b);
-  glm.vec3.normalize(omega, omega);
-  var rot = glm.quat.create();
-  glm.quat.setAxisAngle(rot, omega, theta);
-  return rot;
-}
-
-function quatRotFromForward(b) {
-  return quatRotBetweenVecs(glm.vec3.fromValues(0, 0, -1), b);
 }
 
 function randomRotation(rand) {
